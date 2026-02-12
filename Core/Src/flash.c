@@ -1,5 +1,5 @@
-#include "../Inc/flash.h"
-#include "../Inc/main.h"
+#include "flash.h"
+#include "main.h"
 
 uint32_t packedChecksum(const uint8_t val8, const uint16_t val16) {
     return val16 << 8 | val8;

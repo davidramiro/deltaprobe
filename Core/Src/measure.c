@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "../Inc/usb.h"
-#include "../Inc/main.h"
-#include "../Inc/display.h"
-#include "../Inc/measure.h"
+#include "usb.h"
+#include "usbd.h"
+#include "main.h"
+#include "display.h"
+#include "measure.h"
 
 #include <math.h>
 
@@ -37,6 +38,8 @@ void measure(uint32_t latencies_us[]) {
     const uint32_t start = startMouseAction();
 
     while (1) {
+        tud_task();
+
         const int32_t delta = readADC() - baseline;
 
         if (abs(delta) > sensor_threshold) {

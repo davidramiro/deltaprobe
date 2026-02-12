@@ -1,46 +1,53 @@
 #include <stdint.h>
-#include "../Inc/main.h"
-#include "../Inc/usb.h"
-
-uint8_t hid_report[HID_REPORT_SIZE] = {0};
+#include "main.h"
+#include "usb.h"
+#include "hid_device.h"
+#include "usbd.h"
+#include "usb_descriptors.h"
 
 uint32_t startMouseAction() {
     HAL_TIM_Base_Stop_IT(&htim2);
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start_IT(&htim2);
 
+    hid_mouse_report_t report = {
+        .wheel = 0,
+        .pan = 0
+      };
+
     if (mainMenuIndex == CLICK) {
-        hid_report[0] = 1;
-        hid_report[1] = 0;
-        hid_report[2] = 0;;
+        report.buttons = 1;
     } else if (mainMenuIndex == MOVE) {
-        hid_report[0] = 0;
-        hid_report[1] = 127;
-        hid_report[2] = 127;;
+        report.x = 127,
+        report.y = 127;
     }
 
-    while (!HID_IsIdle(&hUsbDeviceFS)) {
+    while (!tud_hid_ready()) {
+        tud_task();
     }
-    USBD_HID_SendReport(&hUsbDeviceFS, hid_report, HID_REPORT_SIZE);
+
+    tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
 
     return TIM2->CNT;
 }
 
 void stopMouseAction() {
-    if (mainMenuIndex == CLICK) {
-        hid_report[0] = 0;
-        hid_report[1] = 0;
-        hid_report[2] = 0;
-    } else {
-        hid_report[0] = 0;
-        hid_report[1] = -127;
-        hid_report[2] = -127;
-    }
-    while (!HID_IsIdle(&hUsbDeviceFS)) {
-    }
-    USBD_HID_SendReport(&hUsbDeviceFS, hid_report, HID_REPORT_SIZE);
-}
 
-uint8_t HID_IsIdle(const USBD_HandleTypeDef *pdev) {
-    return ((USBD_HID_HandleTypeDef *) pdev->pClassData)->state == USBD_HID_IDLE;
+    hid_mouse_report_t report = {
+        .wheel = 0,
+        .pan = 0
+      };
+
+    if (mainMenuIndex == CLICK) {
+        report.buttons = 0;
+    } else if (mainMenuIndex == MOVE) {
+        report.x = -127,
+        report.y = -127;
+    }
+
+    while (!tud_hid_ready()) {
+        tud_task();
+    }
+
+    tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
 }

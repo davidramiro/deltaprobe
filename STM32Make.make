@@ -87,6 +87,7 @@ Core/Src/syscalls.c \
 Core/Src/sysmem.c \
 Core/Src/system_stm32f4xx.c \
 Core/Src/usb.c \
+Core/Src/usb_descriptors.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c \
@@ -109,13 +110,13 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c \
-Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
-USB_DEVICE/App/usb_device.c \
-USB_DEVICE/App/usbd_desc.c \
-USB_DEVICE/Target/usbd_conf.c
+tinyusb/class/hid/hid_device.c \
+tinyusb/common/tusb_fifo.c \
+tinyusb/device/usbd.c \
+tinyusb/device/usbd_control.c \
+tinyusb/portable/synopsys/dwc2/dcd_dwc2.c \
+tinyusb/portable/synopsys/dwc2/dwc2_common.c \
+tinyusb/tusb.c
 
 
 CXX_SOURCES = \
@@ -213,10 +214,11 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Include \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
--IMiddlewares/ST/STM32_USB_Device_Library/Class/HID/Inc \
--IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
--IUSB_DEVICE/App \
--IUSB_DEVICE/Target
+-Itinyusb \
+-Itinyusb/class/cdc \
+-Itinyusb/class/hid \
+-Itinyusb/common \
+-Itinyusb/device
 
 
 
