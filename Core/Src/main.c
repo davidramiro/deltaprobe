@@ -52,6 +52,7 @@ ADC_HandleTypeDef hadc1;
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim11;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
@@ -63,6 +64,14 @@ uint16_t cycle_index = 0;
 uint32_t max_adc_val;
 uint32_t min_adc_val;
 uint32_t cur_adc_val;
+
+static volatile uint8_t btn_up_pressed = 0;
+static volatile uint8_t btn_down_pressed = 0;
+static volatile uint8_t btn_left_pressed = 0;
+static volatile uint8_t btn_right_pressed = 0;
+static volatile uint8_t btn_center_pressed = 0;
+
+static volatile uint8_t debounce_running = 0;
 
 enum MainMenuSelector mainMenuIndex = CLICK;
 enum ParamMenuSelector paramMenuIndex = CYCLES;
@@ -76,6 +85,7 @@ static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
+static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
 
 void pollMainMenuButtons();
@@ -87,66 +97,75 @@ void pollParamMenuButtons();
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+static inline uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin)
+{
+  return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET) ? 1u : 0u;
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM11) {
+    btn_center_pressed = btn_is_down(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin);;
+    btn_up_pressed     = btn_is_down(BTN_UP_GPIO_Port,     BTN_UP_Pin);
+    btn_down_pressed   = btn_is_down(BTN_DOWN_GPIO_Port,   BTN_DOWN_Pin);
+    btn_left_pressed   = btn_is_down(BTN_LEFT_GPIO_Port,   BTN_LEFT_Pin);
+    btn_right_pressed  = btn_is_down(BTN_RIGHT_GPIO_Port,  BTN_RIGHT_Pin);
+
+    debounce_running = 0;
+    HAL_TIM_Base_Stop_IT(&htim11);
+  }
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  (void)GPIO_Pin;
+
+  __HAL_TIM_SET_COUNTER(&htim11, 0);
+
+  if (!debounce_running) {
+    debounce_running = 1;
+    HAL_TIM_Base_Start_IT(&htim11);
+  }
+}
+
 void pollMainMenuButtons() {
-  if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_RESET) {
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
-    if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_RESET && mainMenuIndex > CLICK) {
-      mainMenuIndex--;
-      HAL_Delay(BTN_DEBOUNCE_DELAY);
-    }
+  if (btn_up_pressed && mainMenuIndex > CLICK) {
+    mainMenuIndex--;
+    btn_up_pressed = 0;
   }
 
-  if (HAL_GPIO_ReadPin(BTN_DOWN_GPIO_Port, BTN_DOWN_Pin) == GPIO_PIN_RESET) {
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
-    if (HAL_GPIO_ReadPin(BTN_DOWN_GPIO_Port, BTN_DOWN_Pin) == GPIO_PIN_RESET && mainMenuIndex < PARAMS) {
-      mainMenuIndex++;
-      HAL_Delay(BTN_DEBOUNCE_DELAY);
-    }
+  if (btn_down_pressed && mainMenuIndex < PARAMS) {
+    mainMenuIndex++;
+    btn_down_pressed = 0;
   }
 }
 
 void pollParamMenuButtons() {
-  if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_RESET) {
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
-    if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_RESET && paramMenuIndex > CYCLES) {
-      paramMenuIndex--;
-      HAL_Delay(BTN_DEBOUNCE_DELAY);
-    }
+  if (btn_up_pressed && paramMenuIndex > CYCLES) {
+    paramMenuIndex--;
+    btn_up_pressed = 0;
   }
-
-
-  if (HAL_GPIO_ReadPin(BTN_DOWN_GPIO_Port, BTN_DOWN_Pin) == GPIO_PIN_RESET) {
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
-    if (HAL_GPIO_ReadPin(BTN_DOWN_GPIO_Port, BTN_DOWN_Pin) == GPIO_PIN_RESET && paramMenuIndex < EXIT) {
-      paramMenuIndex++;
-      HAL_Delay(BTN_DEBOUNCE_DELAY);
-    }
+  if (btn_down_pressed && paramMenuIndex < EXIT) {
+    paramMenuIndex++;
+    btn_down_pressed = 0;
   }
 }
 
 void pollValueButtons() {
-  if (HAL_GPIO_ReadPin(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin) == GPIO_PIN_RESET) {
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
-    if (HAL_GPIO_ReadPin(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin) == GPIO_PIN_RESET) {
-      if (paramMenuIndex == CYCLES) {
-        num_cycles--;
-      } else if (paramMenuIndex == THRESHOLD) {
-        sensor_threshold--;
-      }
+  if (btn_left_pressed) {
+    if (paramMenuIndex == CYCLES) {
+      num_cycles--;
+    } else if (paramMenuIndex == THRESHOLD) {
+      sensor_threshold--;
     }
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
   }
 
-  if (HAL_GPIO_ReadPin(BTN_RIGHT_GPIO_Port, BTN_RIGHT_Pin) == GPIO_PIN_RESET) {
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
-    if (HAL_GPIO_ReadPin(BTN_RIGHT_GPIO_Port, BTN_RIGHT_Pin) == GPIO_PIN_RESET) {
-      if (paramMenuIndex == CYCLES) {
-        num_cycles++;
-      } else if (paramMenuIndex == THRESHOLD) {
-        sensor_threshold++;
-      }
+  if (btn_right_pressed) {
+    if (paramMenuIndex == CYCLES) {
+      num_cycles++;
+    } else if (paramMenuIndex == THRESHOLD) {
+      sensor_threshold++;
     }
-    HAL_Delay(BTN_DEBOUNCE_DELAY);
   }
 }
 
@@ -168,18 +187,18 @@ void menuRoutine() {
 
     populateADCVals();
     drawParamsMenu(paramMenuIndex);
-    if (HAL_GPIO_ReadPin(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin) == GPIO_PIN_RESET) {
+    if (btn_center_pressed) {
       if (paramMenuIndex == EXIT) {
         if (saveToFlash() != FLASH_OK) {
+          HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
           drawError("Flash error!");
           HAL_Delay(2000);
+          HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
         break;
       }
     }
   }
-
-  HAL_Delay(BTN_DEBOUNCE_DELAY);
 }
 
 /* USER CODE END 0 */
@@ -218,10 +237,11 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM2_Init();
   MX_USB_OTG_FS_PCD_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   // Init device stack on roothub port 0 for highspeed device
   tusb_rhport_init_t dev_init = {
-    .role  = TUSB_ROLE_DEVICE,
+    .role = TUSB_ROLE_DEVICE,
     .speed = TUSB_SPEED_FULL
 
   };
@@ -239,12 +259,12 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-   while (1) {
+  while (1) {
     tud_task();
     pollMainMenuButtons();
 
     // wait for button press
-    if (HAL_GPIO_ReadPin(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin) == GPIO_PIN_RESET) {
+    if (btn_center_pressed) {
       if (mainMenuIndex == CLICK || mainMenuIndex == MOVE) {
         uint32_t latencies_us[num_cycles] = {};
 
@@ -261,10 +281,9 @@ int main(void)
         cycle_index = 0;
 
         while (1) {
-          if (HAL_GPIO_ReadPin(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin) == GPIO_PIN_RESET) {
+          if (btn_center_pressed) {
             break;
           }
-          HAL_Delay(BTN_DEBOUNCE_DELAY);
         }
       }
 
@@ -321,7 +340,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
@@ -435,7 +454,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 47;
+  htim2.Init.Prescaler = 96 - 1;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -458,6 +477,37 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM11 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM11_Init(void)
+{
+
+  /* USER CODE BEGIN TIM11_Init 0 */
+
+  /* USER CODE END TIM11_Init 0 */
+
+  /* USER CODE BEGIN TIM11_Init 1 */
+
+  /* USER CODE END TIM11_Init 1 */
+  htim11.Instance = TIM11;
+  htim11.Init.Prescaler = 96 - 1;
+  htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim11.Init.Period = IT_DEBOUNCE_US - 1;
+  htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM11_Init 2 */
+
+  /* USER CODE END TIM11_Init 2 */
 
 }
 
@@ -519,19 +569,19 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : BTN_LEFT_Pin BTN_CENTER_Pin */
   GPIO_InitStruct.Pin = BTN_LEFT_Pin|BTN_CENTER_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN_DOWN_Pin BTN_RIGHT_Pin */
   GPIO_InitStruct.Pin = BTN_DOWN_Pin|BTN_RIGHT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BTN_UP_Pin */
   GPIO_InitStruct.Pin = BTN_UP_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BTN_UP_GPIO_Port, &GPIO_InitStruct);
 
@@ -541,6 +591,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -560,8 +620,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
+  while (1) {
   }
   /* USER CODE END Error_Handler_Debug */
 }
