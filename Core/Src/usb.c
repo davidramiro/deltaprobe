@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "main.h"
 #include "usb.h"
+
+#include "display.h"
 #include "hid_device.h"
 #include "usbd.h"
 #include "usb_descriptors.h"
@@ -24,6 +26,13 @@ uint32_t startMouseAction() {
 
     while (!tud_hid_ready()) {
         tud_task();
+        if (TIM2->CNT > 6000000) {
+            HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+            drawError("USB timeout. Connected?");
+            HAL_Delay(2000);
+            HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
+            return 0;
+        }
     }
 
     tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
@@ -47,6 +56,13 @@ void stopMouseAction() {
 
     while (!tud_hid_ready()) {
         tud_task();
+        if (TIM2->CNT > 6000000) {
+            HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+            drawError("USB timeout. Connected?");
+            HAL_Delay(2000);
+            HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
+            return;
+        }
     }
 
     tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
