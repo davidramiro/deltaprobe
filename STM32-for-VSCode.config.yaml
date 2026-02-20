@@ -82,7 +82,7 @@ includeDirectories:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
-  - tinyusb/**/**
+  - Lib/tinyusb/**/**
   - Lib/u8g2/**
 
 
@@ -95,7 +95,7 @@ sourceFiles:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
-  - tinyusb/**/**
+  - Lib/tinyusb/**/**
   - Lib/u8g2/**
 
 

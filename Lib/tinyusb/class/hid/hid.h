@@ -31,7 +31,7 @@
 #ifndef TUSB_HID_H_
 #define TUSB_HID_H_
 
-#include "common/tusb_common.h"
+#include "../../common/tusb_common.h"
 
 #ifdef __cplusplus
  extern "C" {

@@ -27,7 +27,7 @@
 #ifndef TUSB_USBD_H_
 #define TUSB_USBD_H_
 
-#include "common/tusb_common.h"
+#include "../common/tusb_common.h"
 
 #ifdef __cplusplus
 extern "C" {

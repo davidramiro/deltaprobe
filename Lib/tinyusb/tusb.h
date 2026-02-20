@@ -76,9 +76,9 @@
 #if CFG_TUD_ENABLED
   #include "device/usbd.h"
 
-  #if CFG_TUD_HID
+#if CFG_TUD_HID
     #include "class/hid/hid_device.h"
-  #endif
+#endif
 
   #if CFG_TUD_CDC
     #include "class/cdc/cdc_device.h"

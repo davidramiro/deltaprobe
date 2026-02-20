@@ -153,7 +153,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool osal_mutex_unlock(osal_mutex_t mutex_hd
 //--------------------------------------------------------------------+
 // QUEUE API
 //--------------------------------------------------------------------+
-#include "common/tusb_fifo.h"
+#include "../common/tusb_fifo.h"
 
 typedef struct {
   void (* interrupt_set)(bool enabled);

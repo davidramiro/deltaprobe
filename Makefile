@@ -69,17 +69,7 @@ Core/Src/usb_descriptors.c \
 Core/Src/display.c \
 Core/Src/flash.c \
 Core/Src/measure.c \
-Core/Src/ssd1306.c \
-Core/Src/ssd1306_fonts.c \
-tinyusb/tusb.c \
-tinyusb/common/tusb_fifo.c \
-tinyusb/device/usbd.c \
-tinyusb/device/usbd_control.c \
-tinyusb/class/hid/hid_device.c \
-tinyusb/portable/synopsys/dwc2/dcd_dwc2.c \
-tinyusb/portable/synopsys/dwc2/dwc2_common.c
 
-C_SOURCES += $(wildcard Lib/u8g2/*.c)
 
 # ASM sources
 ASM_SOURCES =  \
@@ -144,14 +134,7 @@ C_INCLUDES =  \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
--IDrivers/CMSIS/Include \
--Itinyusb \
--Itinyusb/device \
--Itinyusb/common \
--Itinyusb/class/cdc \
--Itinyusb/class/hid
-
-C_INCLUDES += -ILib/u8g2
+-IDrivers/CMSIS/Include
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

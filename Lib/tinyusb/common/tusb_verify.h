@@ -28,7 +28,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "tusb_option.h"
+#include "../tusb_option.h"
 #include "tusb_compiler.h"
 
 /*------------------------------------------------------------------*/

@@ -31,7 +31,7 @@
  extern "C" {
 #endif
 
-#include "common/tusb_common.h"
+#include "../common/tusb_common.h"
 
 typedef void (*osal_task_func_t)(void* param);
 

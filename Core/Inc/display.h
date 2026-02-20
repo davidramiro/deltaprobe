@@ -1,5 +1,11 @@
 #pragma once
 #include <stdint.h>
+#include "u8g2.h"
+
+#define DP_W 128
+#define DP_H 128
+#define DP_FONT_SMALL u8g2_font_6x10_tr
+#define DP_FONT_LARGE u8g2_font_logisoso16_tr
 
 void drawSplashScreen(void);
 void drawStartupScreen(uint8_t mode);

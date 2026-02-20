@@ -79,7 +79,7 @@
 #include <string.h>
 
 // Tinyusb Common Headers
-#include "tusb_option.h"
+#include "../tusb_option.h"
 #include "tusb_compiler.h"
 #include "tusb_verify.h"
 #include "tusb_types.h"
