@@ -57,7 +57,9 @@ libraries:
   - m
 
 # Library directories. Folders can be added here that contain custom libraries.
-libraryDirectories: []
+libraryDirectories:
+  - Lib/u8g2
+  - tinyusb
 
 # Files or folders that will be excluded from compilation.
 # Glob patterns (https://www.wikiwand.com/en/Glob_(programming)) can be used.
@@ -80,6 +82,8 @@ includeDirectories:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - tinyusb/**/**
+  - Lib/u8g2/**
 
 
 # Files that should be included in the compilation.
@@ -91,6 +95,8 @@ sourceFiles:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - tinyusb/**/**
+  - Lib/u8g2/**
 
 
 # When no makefile is present it will show a warning pop-up.

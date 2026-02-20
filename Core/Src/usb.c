@@ -4,6 +4,8 @@
 
 #include "display.h"
 #include "hid_device.h"
+#include "stm32f4xx_hal_gpio.h"
+#include "stm32f4xx_hal_tim.h"
 #include "usbd.h"
 #include "usb_descriptors.h"
 

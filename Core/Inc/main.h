@@ -21,6 +21,7 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
+#include "u8g2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 #include <stdint.h>
+#include "u8x8.h"
 
 /* USER CODE END Includes */
 
@@ -55,6 +57,11 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+extern uint8_t u8x8_stm32_gpio_and_delay(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+extern uint8_t u8x8_byte_stm32_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+extern uint8_t u8x8_byte_stm32_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+
+extern u8g2_t u8g2;
 
 /* USER CODE END EFP */
 
@@ -86,6 +93,7 @@ void Error_Handler(void);
 
 extern TIM_HandleTypeDef htim2;
 extern ADC_HandleTypeDef hadc1;
+extern I2C_HandleTypeDef hi2c1;
 extern uint16_t cycle_index;
 extern uint8_t num_cycles;
 extern uint16_t sensor_threshold;

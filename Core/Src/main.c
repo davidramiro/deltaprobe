@@ -22,12 +22,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "ssd1306.h"
 #include "display.h"
 #include "flash.h"
 #include "measure.h"
 #include "tusb.h"
 #include "usbd.h"
+#include "u8x8.h"
+#include "u8g2.h"
 
 /* USER CODE END Includes */
 
@@ -58,7 +59,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 
-uint16_t sensor_threshold = DEFAULT_THRESHOLD;
+uint16_t sensor_threshold = DEFAULT_THRESHOLD ;
 uint8_t num_cycles = DEFAULT_NUM_CYCLES;
 uint16_t cycle_index = 0;
 uint32_t max_adc_val;
@@ -75,6 +76,7 @@ static volatile uint8_t debounce_running = 0;
 
 enum MainMenuSelector mainMenuIndex = CLICK;
 enum ParamMenuSelector paramMenuIndex = CYCLES;
+u8g2_t u8g2;
 
 /* USER CODE END PV */
 
@@ -156,6 +158,10 @@ void pollValueButtons() {
     if (paramMenuIndex == CYCLES) {
       num_cycles--;
     } else if (paramMenuIndex == THRESHOLD) {
+      if (sensor_threshold == 0) {
+        sensor_threshold = 4096;
+        return;
+      }
       sensor_threshold--;
     }
   }
@@ -164,6 +170,10 @@ void pollValueButtons() {
     if (paramMenuIndex == CYCLES) {
       num_cycles++;
     } else if (paramMenuIndex == THRESHOLD) {
+      if (sensor_threshold == 4096) {
+        sensor_threshold = 0;
+        return;
+      }
       sensor_threshold++;
     }
   }
@@ -247,7 +257,11 @@ int main(void)
   };
   tusb_init(0, &dev_init);
 
-  ssd1306_Init();
+  u8g2_Setup_sh1107_i2c_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c, u8x8_stm32_gpio_and_delay);
+
+  u8g2_InitDisplay(&u8g2);
+  u8g2_SetPowerSave(&u8g2, 0);
+
   drawSplashScreen();
   HAL_Delay(2000);
 
