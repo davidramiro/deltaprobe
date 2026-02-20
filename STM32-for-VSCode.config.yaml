@@ -82,8 +82,8 @@ includeDirectories:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
-  - Lib/tinyusb/**/**
-  - Lib/u8g2/**
+  - Lib/tinyusb/src/**/**
+  - Lib/u8g2/csrc/**
 
 
 # Files that should be included in the compilation.
@@ -94,9 +94,8 @@ includeDirectories:
 sourceFiles:  
   - Src/**
   - Core/Src/**
-  - Core/Lib/**
-  - Lib/tinyusb/**/**
-  - Lib/u8g2/**
+  - Lib/tinyusb/src/**/**
+  - Lib/u8g2/csrc/**
 
 
 # When no makefile is present it will show a warning pop-up.

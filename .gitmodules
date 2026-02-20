@@ -1,0 +1,6 @@
+[submodule "Lib/tinyusb"]
+	path = Lib/tinyusb
+	url = git@github.com:hathach/tinyusb.git
+[submodule "Lib/u8g2"]
+	path = Lib/u8g2
+	url = git@github.com:olikraus/u8g2.git

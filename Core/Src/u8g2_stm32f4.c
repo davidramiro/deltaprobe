@@ -1,8 +1,8 @@
 #include <stdint.h>
 
-#include "../Inc/main.h"
-#include "../../Drivers//STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
-#include "../../Lib/u8g2/u8g2.h"
+#include "main.h"
+#include "stm32f4xx_hal.h"
+#include "u8g2.h"
 
 #define DEVICE_ADDRESS 	0x3C
 #define TX_TIMEOUT		100
