@@ -257,9 +257,12 @@ int main(void)
   };
   tusb_init(0, &dev_init);
 
-  u8g2_Setup_sh1107_i2c_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c, u8x8_stm32_gpio_and_delay);
+  u8g2_Setup_sh1107_i2c_seeed_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c, u8x8_stm32_gpio_and_delay);
+
+  
 
   u8g2_InitDisplay(&u8g2);
+
   u8g2_SetPowerSave(&u8g2, 0);
 
   drawSplashScreen();
@@ -402,7 +405,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
