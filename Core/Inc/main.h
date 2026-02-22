@@ -21,7 +21,6 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
-#include "u8g2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +34,7 @@ extern "C" {
 
 #include <stdint.h>
 #include "u8x8.h"
+#include "u8g2.h"
 
 /* USER CODE END Includes */
 
