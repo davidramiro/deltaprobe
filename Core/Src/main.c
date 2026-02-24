@@ -214,6 +214,7 @@ void menuRoutine() {
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
         HAL_Delay(50);
+        paramMenuIndex = 0;
         break;
       }
     }
