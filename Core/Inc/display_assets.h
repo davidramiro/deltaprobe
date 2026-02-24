@@ -2,7 +2,6 @@
 #include <stdint.h>
 
 extern const unsigned char logo_bitmap_64[];
-extern const unsigned char logo_bitmap_32[];
 
 extern const unsigned char arrow_bitmap[];
 extern const unsigned char click_bitmap[];
@@ -19,3 +18,6 @@ extern const unsigned char threshold_bitmap[];
 extern const unsigned char exit_bitmap[];
 
 extern const unsigned char graph_point_bitmap[];
+
+extern const unsigned char jiggler_full_bitmap[];
+extern const unsigned char jiggler_bitmap[];

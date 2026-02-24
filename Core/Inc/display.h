@@ -6,6 +6,7 @@
 #define DP_H 128
 #define DP_FONT_SMALL u8g2_font_6x10_tr
 #define DP_FONT_LARGE u8g2_font_logisoso16_tr
+#define DP_FONT_MEDIUM u8g2_font_10x20_tr
 
 void drawSplashScreen(void);
 void drawStartupScreen(uint8_t mode);
@@ -16,5 +17,6 @@ void drawMainMenuInline(uint8_t index);
 void drawParamsMenu(uint8_t index);
 void drawError(char * error);
 void drawGraphInline(uint32_t latencies_us[]);
+void drawJigglerScreen();
 uint32_t getMax(uint32_t latencies_us[]);
 uint32_t getMin(uint32_t latencies_us[]);

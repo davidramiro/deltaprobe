@@ -25,6 +25,7 @@
 #include "display.h"
 #include "flash.h"
 #include "measure.h"
+#include "usb.h"
 #include "tusb.h"
 #include "usbd.h"
 #include "u8x8.h"
@@ -53,6 +54,7 @@ ADC_HandleTypeDef hadc1;
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim11;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
@@ -73,6 +75,7 @@ static volatile uint8_t btn_right_pressed = 0;
 static volatile uint8_t btn_center_pressed = 0;
 
 static volatile uint8_t debounce_running = 0;
+static volatile uint8_t jiggle_requested = 0;
 
 enum MainMenuSelector mainMenuIndex = CLICK;
 enum ParamMenuSelector paramMenuIndex = CYCLES;
@@ -88,6 +91,7 @@ static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_TIM11_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 void pollMainMenuButtons();
@@ -115,6 +119,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     debounce_running = 0;
     HAL_TIM_Base_Stop_IT(&htim11);
+  }
+
+  if (htim->Instance == TIM3) {
+    jiggle_requested = 1;
   }
 }
 
@@ -205,10 +213,28 @@ void menuRoutine() {
           HAL_Delay(2000);
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
+        HAL_Delay(50);
         break;
       }
     }
   }
+}
+
+void jiggleRoutine() {
+  while (1) {
+    tud_task();
+
+    if (jiggle_requested) {
+      jiggle_requested = 0;
+      startMouseAction();
+    }
+
+    if (btn_center_pressed) {
+      HAL_Delay(50);
+      return;
+    }
+  }
+  
 }
 
 /* USER CODE END 0 */
@@ -248,6 +274,7 @@ int main(void)
   MX_TIM2_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM11_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   // Init device stack on roothub port 0 for highspeed device
   tusb_rhport_init_t dev_init = {
@@ -257,7 +284,7 @@ int main(void)
   };
   tusb_init(0, &dev_init);
 
-  u8g2_Setup_sh1107_i2c_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c, u8x8_stm32_gpio_and_delay);
+  u8g2_Setup_sh1107_i2c_seeed_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c, u8x8_stm32_gpio_and_delay);
 
   u8g2_InitDisplay(&u8g2);
   u8g2_SetPowerSave(&u8g2, 0);
@@ -268,6 +295,8 @@ int main(void)
   readFlash();
 
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
+
+  HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
 
@@ -296,6 +325,7 @@ int main(void)
 
         while (1) {
           if (btn_center_pressed) {
+            HAL_Delay(50);
             break;
           }
         }
@@ -304,6 +334,11 @@ int main(void)
       if (mainMenuIndex == PARAMS) {
         mainMenuIndex = 0;
         menuRoutine();
+      }
+
+      if (mainMenuIndex == JIGGLER) {
+        drawJigglerScreen();
+        jiggleRoutine();
       }
     }
 
@@ -491,6 +526,51 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 2975;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 64515;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
