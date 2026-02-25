@@ -110,7 +110,8 @@ enum ParamMenuSelector {
 enum MainMenuSelector {
   CLICK = 0,
   MOVE = 1,
-  PARAMS = 2
+  JIGGLER = 2,
+  PARAMS = 3
 };
 
 extern enum MainMenuSelector mainMenuIndex;

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include "main.h"
 #include "usb.h"
 
@@ -24,6 +25,9 @@ uint32_t startMouseAction() {
     } else if (mainMenuIndex == MOVE) {
         report.x = 127,
         report.y = 127;
+    } else if (mainMenuIndex == JIGGLER) {
+        report.x = (rand() % 7) - 3;;
+        report.y = (rand() % 7) - 3;;
     }
 
     while (!tud_hid_ready()) {

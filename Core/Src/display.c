@@ -9,10 +9,10 @@ void drawSplashScreen(void) {
     u8g2_ClearBuffer(&u8g2);
 
     u8g2_DrawXBMP(&u8g2, 30, 6, 64, 64, logo_bitmap_64);
-    u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-    u8g2_DrawStr(&u8g2, 28, DP_H - 29, "davidramiro");
+    u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+    u8g2_DrawStr(&u8g2, 10, DP_H - 4, "davidramiro");
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
-    u8g2_DrawStr(&u8g2, 11, DP_H - 19, "deltaprobe");
+    u8g2_DrawStr(&u8g2, 18, DP_H - 19, "deltaprobe");
 
     u8g2_SendBuffer(&u8g2);
 }
@@ -20,11 +20,11 @@ void drawSplashScreen(void) {
 void drawStartupScreen(uint8_t mode) {
     u8g2_ClearBuffer(&u8g2);
 
-    u8g2_DrawXBMP(&u8g2, 3, 8, 32, 32, logo_bitmap_32);
+    u8g2_SetFont(&u8g2, DP_FONT_LARGE);
+    u8g2_DrawStr(&u8g2, 0, 16, "deltaprobe");
 
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-    u8g2_DrawStr(&u8g2, 48, 20, "davidramiro");
-    u8g2_DrawStr(&u8g2, 51, 31, "deltaprobe");
+    u8g2_DrawStr(&u8g2, 60, 26, "davidramiro");
 
     drawMainMenuInline(mode);
 
@@ -62,18 +62,21 @@ void drawSensorBarInline(void) {
 }
 
 void drawMainMenuInline(uint8_t index) {
-    const uint8_t selectorY = (uint8_t) (55 + index * 24);
+    const uint8_t selectorY = (uint8_t) (31 + index * 24);
 
     u8g2_DrawXBMP(&u8g2, 2, selectorY, 128, 21, menu_selection_bitmap);
 
-    u8g2_DrawXBMP(&u8g2, 8, 57, 16, 16, click_bitmap);
-    u8g2_DrawXBMP(&u8g2, 8, 81, 16, 16, move_bitmap);
+    u8g2_DrawXBMP(&u8g2, 9, 33, 15, 16, click_bitmap);
+    u8g2_DrawXBMP(&u8g2, 12, 57, 11, 16, move_bitmap);
+    u8g2_DrawXBMP(&u8g2, 8, 81, 17, 16, jiggler_bitmap);
     u8g2_DrawXBMP(&u8g2, 8, 105, 16, 16, cogwheel_bitmap);
 
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-    u8g2_DrawStr(&u8g2, 40, 69, "CLICK MODE");
-    u8g2_DrawStr(&u8g2, 43, 93, "MOVE MODE");
+    u8g2_DrawStr(&u8g2, 40, 45, "CLICK MODE");
+    u8g2_DrawStr(&u8g2, 40, 69, "MOVE MODE");
+    u8g2_DrawStr(&u8g2, 43, 93, "JIGGLER");
     u8g2_DrawStr(&u8g2, 40, 117, "PARAMETERS");
+    
 }
 
 void drawParamsMenu(uint8_t index) {
@@ -99,7 +102,7 @@ void drawParamsMenu(uint8_t index) {
     }
 
     u8g2_DrawXBMP(&u8g2, 8, 32, 16, 16, cycles_bitmap);
-    u8g2_DrawXBMP(&u8g2, 8, 56, 24, 13, threshold_bitmap);
+    u8g2_DrawXBMP(&u8g2, 8, 56, 15, 16, threshold_bitmap);
     u8g2_DrawXBMP(&u8g2, 8, 80, 15, 14, exit_bitmap);
 
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
@@ -133,14 +136,14 @@ void drawMeasurement(uint32_t baseline, uint32_t new_value, uint32_t latency) {
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
     char baseline_buf[12];
     snprintf(baseline_buf, sizeof(baseline_buf), "%lu", (unsigned long) baseline);
-    u8g2_DrawStr(&u8g2, 3, 56, baseline_buf);
+    u8g2_DrawStr(&u8g2, 3, 64, baseline_buf);
 
     if (new_value != (uint32_t) -1) {
         char new_buf[12];
         snprintf(new_buf, sizeof(new_buf), "%lu", (unsigned long) new_value);
-        u8g2_DrawStr(&u8g2, 78, 56, new_buf);
+        u8g2_DrawStr(&u8g2, 73, 64, new_buf);
 
-        u8g2_DrawXBMP(&u8g2, 55, 54, 17, 10, arrow_bitmap);
+        u8g2_DrawXBMP(&u8g2, 45, 50, 17, 10, arrow_bitmap);
     }
 
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
@@ -148,11 +151,11 @@ void drawMeasurement(uint32_t baseline, uint32_t new_value, uint32_t latency) {
 
     if (latency != (uint32_t) -1) {
         u8g2_SetFont(&u8g2, DP_FONT_LARGE);
-        u8g2_DrawStr(&u8g2, 93, 97, "ms");
+        u8g2_DrawStr(&u8g2, 93, 102, "ms");
 
         char latency_buf[16];
         snprintf(latency_buf, sizeof(latency_buf), "%.3f", (float) latency / 1000.0f);
-        u8g2_DrawStr(&u8g2, 2, 97, latency_buf);
+        u8g2_DrawStr(&u8g2, 2, 102, latency_buf);
     }
 
     u8g2_SendBuffer(&u8g2);
@@ -199,7 +202,7 @@ void drawGraphInline(uint32_t latencies_us[]) {
         uint32_t v_ms = latencies_us[i] / 1000;
         uint8_t y = (uint8_t) (93 - (int) ((v_ms - min) * pixel_per_value));
 
-        u8g2_DrawXBMP(&u8g2, x, y, 3, 3, graph_point_bitmap);
+        u8g2_DrawXBMP(&u8g2, x-1, y-1, 3, 3, graph_point_bitmap);
 
         if (prevX != 0) {
             u8g2_DrawLine(&u8g2, prevX, prevY, x, y);
@@ -215,18 +218,18 @@ void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms) {
 
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
     u8g2_DrawStr(&u8g2, 2, 10, "MEAN");
-    u8g2_DrawStr(&u8g2, 2, 38, "STANDARD DEVIATION");
-    u8g2_DrawStr(&u8g2, 107, 24, "ms");
-    u8g2_DrawStr(&u8g2, 107, 54, "ms");
+    u8g2_DrawStr(&u8g2, 2, 38, "STD DEV");
+    u8g2_DrawStr(&u8g2, 114, 24, "ms");
+    u8g2_DrawStr(&u8g2, 114, 54, "ms");
 
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
     char mean_buf[16];
     snprintf(mean_buf, sizeof(mean_buf), "%.3f", mean_ms);
-    u8g2_DrawStr(&u8g2, 2, 18, mean_buf);
+    u8g2_DrawStr(&u8g2, 52, 18, mean_buf);
 
     char sd_buf[16];
     snprintf(sd_buf, sizeof(sd_buf), "%.3f", sd_ms);
-    u8g2_DrawStr(&u8g2, 2, 46, sd_buf);
+    u8g2_DrawStr(&u8g2, 52, 46, sd_buf);
 
     u8g2_DrawXBMP(&u8g2, 1, 105, 128, 21, menu_selection_bitmap);
     u8g2_DrawXBMP(&u8g2, 8, 108, 15, 14, exit_bitmap);
@@ -244,6 +247,23 @@ void drawError(char *error) {
 
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
     u8g2_DrawStr(&u8g2, 10, 50, error);
+
+    u8g2_SendBuffer(&u8g2);
+}
+
+void drawJigglerScreen() {
+    u8g2_ClearBuffer(&u8g2);
+
+    u8g2_SetFont(&u8g2, DP_FONT_LARGE);
+    u8g2_DrawStr(&u8g2, 0, 20, "JIGGLER ACTIVE");
+
+    u8g2_DrawXBMP(&u8g2, 1, 105, 128, 21, menu_selection_bitmap);
+    u8g2_DrawXBMP(&u8g2, 8, 108, 15, 14, exit_bitmap);
+
+    u8g2_DrawXBM(&u8g2, 33, 28, 64, 64, jiggler_full_bitmap);
+
+    u8g2_SetFont(&u8g2, DP_FONT_SMALL);
+    u8g2_DrawStr(&u8g2, 41, 120, "MAIN MENU");
 
     u8g2_SendBuffer(&u8g2);
 }
