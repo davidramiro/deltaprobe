@@ -17,6 +17,6 @@ void drawMainMenuInline(uint8_t index);
 void drawParamsMenu(uint8_t index);
 void drawError(char * error);
 void drawGraphInline(uint32_t latencies_us[]);
-void drawJigglerScreen();
+void drawJigglerScreen(uint8_t countdown);
 uint32_t getMax(uint32_t latencies_us[]);
 uint32_t getMin(uint32_t latencies_us[]);
