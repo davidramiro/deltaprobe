@@ -251,7 +251,7 @@ void drawError(char *error) {
     u8g2_SendBuffer(&u8g2);
 }
 
-void drawJigglerScreen() {
+void drawJigglerScreen(uint8_t countdown) {
     u8g2_ClearBuffer(&u8g2);
 
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
@@ -260,7 +260,16 @@ void drawJigglerScreen() {
     u8g2_DrawXBMP(&u8g2, 1, 105, 128, 21, menu_selection_bitmap);
     u8g2_DrawXBMP(&u8g2, 8, 108, 15, 14, exit_bitmap);
 
-    u8g2_DrawXBM(&u8g2, 33, 28, 64, 64, jiggler_full_bitmap);
+    if (countdown % 2 == 0) {
+        u8g2_DrawXBM(&u8g2, 37, 25, 64, 64, jiggler_full_bitmap_01);
+    } else {
+        u8g2_DrawXBM(&u8g2, 29, 25, 64, 64, jiggler_full_bitmap_02);
+    }
+
+    char buf[23];
+    snprintf(buf, sizeof(buf), "Sending input in %d s", countdown);
+    u8g2_SetFont(&u8g2, u8g2_font_6x12_tr);
+    u8g2_DrawStr(&u8g2, 1, 99, buf);
 
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
     u8g2_DrawStr(&u8g2, 41, 120, "MAIN MENU");

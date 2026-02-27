@@ -55,6 +55,7 @@ I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim11;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
@@ -75,7 +76,12 @@ static volatile uint8_t btn_right_pressed = 0;
 static volatile uint8_t btn_center_pressed = 0;
 
 static volatile uint8_t debounce_running = 0;
-static volatile uint8_t jiggle_requested = 0;
+static volatile uint8_t jiggle_interrupt_counter = 0;
+static volatile uint8_t led_interrupt_counter = 0;
+static volatile uint16_t standby_interrupt_counter = 0;
+static volatile uint8_t sleep_requested = 0;
+static volatile uint8_t wakeup_requested = 0;
+static volatile uint8_t display_sleeping = 0;
 
 enum MainMenuSelector mainMenuIndex = CLICK;
 enum ParamMenuSelector paramMenuIndex = CYCLES;
@@ -92,6 +98,7 @@ static void MX_TIM2_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_TIM11_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 void pollMainMenuButtons();
@@ -108,6 +115,27 @@ static inline uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin)
   return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET) ? 1u : 0u;
 }
 
+void handleDisplaySleep() {
+  if (display_sleeping) {
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, led_interrupt_counter % 5 == 0);
+  }
+  if (sleep_requested) {
+    if (!display_sleeping) {
+      u8g2_SetPowerSave(&u8g2, 1);
+      display_sleeping = 1;
+    }
+    sleep_requested = 0;
+  }
+  if (wakeup_requested) {
+    if (display_sleeping) {
+      u8g2_SetPowerSave(&u8g2, 0);
+      display_sleeping = 0;
+      HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
+    }
+  }
+  wakeup_requested = 0;
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM11) {
@@ -122,16 +150,39 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 
   if (htim->Instance == TIM3) {
-    jiggle_requested = 1;
+    jiggle_interrupt_counter++;
+    led_interrupt_counter++;
   }
+
+  if (htim->Instance == TIM4) {
+    
+    if (!display_sleeping) { 
+      if (standby_interrupt_counter == 2) {
+          sleep_requested = 1;
+      }
+      if (standby_interrupt_counter < 2) {
+          standby_interrupt_counter++;
+      }
+    }
+  }
+
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   (void)GPIO_Pin;
 
+  HAL_TIM_Base_Stop_IT(&htim4);
+  __HAL_TIM_SET_COUNTER(&htim4, 0);
   __HAL_TIM_SET_COUNTER(&htim11, 0);
+  standby_interrupt_counter = 0;
+  HAL_TIM_Base_Start_IT(&htim4);
 
+  if (display_sleeping) { 
+      wakeup_requested = 1;
+      return;
+  }  
+    
   if (!debounce_running) {
     debounce_running = 1;
     HAL_TIM_Base_Start_IT(&htim11);
@@ -200,6 +251,7 @@ void populateADCVals() {
 void menuRoutine() {
   populateADCVals();
   while (1) {
+    handleDisplaySleep();
     pollParamMenuButtons();
     pollValueButtons();
 
@@ -222,11 +274,18 @@ void menuRoutine() {
 }
 
 void jiggleRoutine() {
+  
+  jiggle_interrupt_counter = 0;
+  HAL_Delay(50);
+
   while (1) {
     tud_task();
+    handleDisplaySleep();
 
-    if (jiggle_requested) {
-      jiggle_requested = 0;
+    drawJigglerScreen(20 - jiggle_interrupt_counter);
+    if (jiggle_interrupt_counter == 20) {
+      jiggle_interrupt_counter = 0;
+      
       startMouseAction();
     }
 
@@ -276,6 +335,7 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM11_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   // Init device stack on roothub port 0 for highspeed device
   tusb_rhport_init_t dev_init = {
@@ -297,6 +357,7 @@ int main(void)
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
 
   HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim4);
 
   /* USER CODE END 2 */
 
@@ -305,6 +366,7 @@ int main(void)
   while (1) {
     tud_task();
     pollMainMenuButtons();
+    handleDisplaySleep();
 
     // wait for button press
     if (btn_center_pressed) {
@@ -337,7 +399,6 @@ int main(void)
       }
 
       if (mainMenuIndex == JIGGLER) {
-        drawJigglerScreen();
         jiggleRoutine();
       }
     }
@@ -548,9 +609,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 2975;
+  htim3.Init.Prescaler = 1535;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 64515;
+  htim3.Init.Period = 62499;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -571,6 +632,51 @@ static void MX_TIM3_Init(void)
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 7391;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 64934;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 

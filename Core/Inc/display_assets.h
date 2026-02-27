@@ -19,5 +19,6 @@ extern const unsigned char exit_bitmap[];
 
 extern const unsigned char graph_point_bitmap[];
 
-extern const unsigned char jiggler_full_bitmap[];
+extern const unsigned char jiggler_full_bitmap_01[];
+extern const unsigned char jiggler_full_bitmap_02[];
 extern const unsigned char jiggler_bitmap[];
