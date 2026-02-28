@@ -9,10 +9,10 @@ void drawSplashScreen(void) {
     u8g2_ClearBuffer(&u8g2);
 
     u8g2_DrawXBMP(&u8g2, 30, 6, 64, 64, logo_bitmap_64);
-    u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
-    u8g2_DrawStr(&u8g2, 10, DP_H - 4, "davidramiro");
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
     u8g2_DrawStr(&u8g2, 18, DP_H - 19, "deltaprobe");
+    u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+    u8g2_DrawStr(&u8g2, 30, DP_H - 4, "davidramiro");
 
     u8g2_SendBuffer(&u8g2);
 }
@@ -254,7 +254,7 @@ void drawError(char *error) {
 void drawJigglerScreen(uint8_t countdown) {
     u8g2_ClearBuffer(&u8g2);
 
-    u8g2_SetFont(&u8g2, DP_FONT_LARGE);
+    u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
     u8g2_DrawStr(&u8g2, 0, 20, "JIGGLER ACTIVE");
 
     u8g2_DrawXBMP(&u8g2, 1, 105, 128, 21, menu_selection_bitmap);
@@ -268,11 +268,29 @@ void drawJigglerScreen(uint8_t countdown) {
 
     char buf[23];
     snprintf(buf, sizeof(buf), "Sending input in %d s", countdown);
-    u8g2_SetFont(&u8g2, u8g2_font_6x12_tr);
-    u8g2_DrawStr(&u8g2, 1, 99, buf);
-
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-    u8g2_DrawStr(&u8g2, 41, 120, "MAIN MENU");
+    u8g2_DrawStr(&u8g2, 1, 99, buf);
+    u8g2_DrawStr(&u8g2, 41, 119, "MAIN MENU");
+
+    u8g2_SendBuffer(&u8g2);
+}
+
+void drawFlashScreen(const uint8_t progress) {
+    u8g2_ClearBuffer(&u8g2);
+
+    uint8_t w = 19 * progress;
+
+    if (progress == 6) {
+        w = 118;
+    }
+
+    u8g2_DrawXBM(&u8g2, 2, 52, 128, 21, menu_selection_bitmap);
+    u8g2_DrawRBox(&u8g2, 5, 54, w, 16, 2);
+
+    u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+    u8g2_DrawStr(&u8g2, 18, 27, "WRITING FLASH");
+
+    u8g2_DrawStr(&u8g2, 10, 109, "DO NOT TURN OFF");
 
     u8g2_SendBuffer(&u8g2);
 }
