@@ -115,6 +115,29 @@ static inline uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin)
   return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET) ? 1u : 0u;
 }
 
+void handleMCUSleep() {
+  if (sleep_requested) {
+    sleep_requested = 0;
+    u8g2_SetPowerSave(&u8g2, 1);
+
+    display_sleeping = 1;
+
+    HAL_TIM_Base_Stop_IT(&htim3);
+    HAL_TIM_Base_Stop_IT(&htim4);
+    HAL_SuspendTick();
+
+    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+
+    HAL_ResumeTick();
+    HAL_TIM_Base_Start_IT(&htim3);
+    HAL_TIM_Base_Start_IT(&htim4);
+
+    u8g2_SetPowerSave(&u8g2, 0);
+    display_sleeping = 0;
+    wakeup_requested = 0;
+  }
+}
+
 void handleDisplaySleep() {
   if (display_sleeping) {
     HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, led_interrupt_counter % 5 == 0);
@@ -251,7 +274,7 @@ void populateADCVals() {
 void menuRoutine() {
   populateADCVals();
   while (1) {
-    handleDisplaySleep();
+    handleMCUSleep();
     pollParamMenuButtons();
     pollValueButtons();
 
@@ -282,11 +305,11 @@ void jiggleRoutine() {
     tud_task();
     handleDisplaySleep();
 
-    drawJigglerScreen(20 - jiggle_interrupt_counter);
-    if (jiggle_interrupt_counter == 20) {
+    drawJigglerScreen(JIGGLE_INTERVAL_S - jiggle_interrupt_counter);
+    if (jiggle_interrupt_counter == JIGGLE_INTERVAL_S) {
       jiggle_interrupt_counter = 0;
       
-      startMouseAction();
+      randomMouseMove();
     }
 
     if (btn_center_pressed) {
@@ -338,6 +361,10 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   // Init device stack on roothub port 0 for highspeed device
+
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+
   tusb_rhport_init_t dev_init = {
     .role = TUSB_ROLE_DEVICE,
     .speed = TUSB_SPEED_FULL
@@ -352,9 +379,11 @@ int main(void)
   drawSplashScreen();
   HAL_Delay(2000);
 
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
+
   readFlash();
 
-  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
@@ -366,7 +395,7 @@ int main(void)
   while (1) {
     tud_task();
     pollMainMenuButtons();
-    handleDisplaySleep();
+    handleMCUSleep();
 
     // wait for button press
     if (btn_center_pressed) {

@@ -25,9 +25,6 @@ uint32_t startMouseAction() {
     } else if (mainMenuIndex == MOVE) {
         report.x = 127,
         report.y = 127;
-    } else if (mainMenuIndex == JIGGLER) {
-        report.x = (rand() % 7) - 3;;
-        report.y = (rand() % 7) - 3;;
     }
 
     while (!tud_hid_ready()) {
@@ -45,6 +42,33 @@ uint32_t startMouseAction() {
 
     return TIM2->CNT;
 }
+
+void randomMouseMove() {
+    hid_mouse_report_t report = {
+        .wheel = 0,
+        .pan = 0,
+        .x = (rand() % 7) - 3,
+        .y = (rand() % 7) - 3,
+      };
+
+    while (!tud_hid_ready()) {
+        tud_task();
+        if (TIM2->CNT > 6000000) {
+            HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+            drawError("USB timeout. Connected?");
+            HAL_Delay(2000);
+            HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
+            return;
+        }
+    }
+
+    tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
+
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
+    HAL_Delay(50);
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
+}
+
 
 void stopMouseAction() {
 

@@ -90,6 +90,8 @@ extern u8g2_t u8g2;
 /* USER CODE BEGIN Private defines */
 #define DEFAULT_THRESHOLD 40
 #define DEFAULT_NUM_CYCLES 10
+#define DISPLAY_SLEEP_TIMEOUT_S 60
+#define JIGGLE_INTERVAL_S 30
 
 extern TIM_HandleTypeDef htim2;
 extern ADC_HandleTypeDef hadc1;
