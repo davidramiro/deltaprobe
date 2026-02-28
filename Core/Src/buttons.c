@@ -55,7 +55,6 @@ void pollValueButtons() {
   }
 }
 
-uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin)
-{
+uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin) {
   return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET) ? 1u : 0u;
 }

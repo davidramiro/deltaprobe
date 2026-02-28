@@ -32,7 +32,8 @@ void handleMCUSleep() {
 
 void handleDisplaySleep() {
   if (display_sleeping) {
-    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, led_interrupt_counter % 5 == 0);
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin,
+                      led_interrupt_counter % 5 == 0);
   }
   if (sleep_requested) {
     if (!display_sleeping) {
