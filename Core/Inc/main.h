@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.h
+ * @brief          : Header for main.c file.
+ *                   This file contains the common defines of the application.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -32,9 +32,9 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include <stdint.h>
-#include "u8x8.h"
 #include "u8g2.h"
+#include "u8x8.h"
+#include <stdint.h>
 
 /* USER CODE END Includes */
 
@@ -57,9 +57,12 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-extern uint8_t u8x8_stm32_gpio_and_delay(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
-extern uint8_t u8x8_byte_stm32_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
-extern uint8_t u8x8_byte_stm32_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+extern uint8_t u8x8_stm32_gpio_and_delay(u8x8_t *u8x8, uint8_t msg,
+                                         uint8_t arg_int, void *arg_ptr);
+extern uint8_t u8x8_byte_stm32_hw_spi(u8x8_t *u8x8, uint8_t msg,
+                                      uint8_t arg_int, void *arg_ptr);
+extern uint8_t u8x8_byte_stm32_hw_i2c(u8x8_t *u8x8, uint8_t msg,
+                                      uint8_t arg_int, void *arg_ptr);
 
 extern u8g2_t u8g2;
 
@@ -125,19 +128,9 @@ extern volatile uint8_t sleep_requested;
 extern volatile uint8_t wakeup_requested;
 extern volatile uint8_t display_sleeping;
 
-enum ParamMenuSelector {
-  CYCLES = 0,
-  THRESHOLD = 1,
-  SENSOR = 2,
-  EXIT = 3
-};
+enum ParamMenuSelector { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 };
 
-enum MainMenuSelector {
-  CLICK = 0,
-  MOVE = 1,
-  JIGGLER = 2,
-  PARAMS = 3
-};
+enum MainMenuSelector { CLICK = 0, MOVE = 1, JIGGLER = 2, PARAMS = 3 };
 
 extern enum MainMenuSelector mainMenuIndex;
 extern enum ParamMenuSelector paramMenuIndex;
