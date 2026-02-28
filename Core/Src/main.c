@@ -93,10 +93,6 @@ static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
-void pollMainMenuButtons();
-
-void pollParamMenuButtons();
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -104,7 +100,14 @@ void pollParamMenuButtons();
 
 
 /**
- *
+ * @brief  This function is called when a timer interrupt occurs.
+ * @details It handles three different timer events:
+ * - TIM11 is the button interrupt timer. Debounces with about 50ms.
+ * - TIM3 fires every second to provide ticks for mouse jiggler.
+ * - TIM4 fires every 5 seconds to provide ticks for the standby routine.
+ * @param  htim: Pointer to a TIM_HandleTypeDef structure that allows
+ *  identifying the interrupting timer.
+ * @retval None
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM11) {
@@ -137,6 +140,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   }
 }
 
+
+/**
+ * @brief  This function handles the EXTI interrupt callback.
+ * @details Used for passing button events to the application with some debounce
+ * and waking up from screen standby.
+ *
+ * @param  GPIO_Pin GPIO pin number of the causing pin.
+ * @retval None
+ */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   (void)GPIO_Pin;
 
@@ -157,6 +169,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
+
+/**
+ * @brief Reads the current ADC value and updates the global minimum and maximum values.
+ * @details This function calls readAveragedADC() to get an average of the current ADC  value.
+ * It then compares this value against the stored min_adc_val and max_adc_val, updating the respective
+ * global variables if the new value is lower or higher.
+ *
+ * @retval None
+ */
 void populateADCVals() {
   cur_adc_val = readAveragedADC();
 
@@ -167,6 +188,12 @@ void populateADCVals() {
   }
 }
 
+/**
+ * @brief This function runs the parameter menu loop.
+ * @details It can sleep the MCU, polls buttons, polls ADC, and draws the menu.
+ * If the exit button is pressed, it saves to flash. If flash fails, it shows an error.
+ * @retval None
+ */
 void menuRoutine() {
   populateADCVals();
   while (1) {
@@ -192,8 +219,13 @@ void menuRoutine() {
   }
 }
 
+/**
+ * @brief This function runs the jiggle routine.
+ * It initializes a counter, waits for debounce, then enters a loop.
+ * It draws a countdown screen, moves the mouse randomly after JIGGLE_INTERVAL_S seconds,
+ * and exits if the center button is pressed.
+ */
 void jiggleRoutine() {
-
   jiggle_interrupt_counter = 0;
   HAL_Delay(50);
 
@@ -314,6 +346,8 @@ int main(void) {
             break;
           }
         }
+        sleep_requested = 0;
+        standby_interrupt_counter = 0;
       }
 
       if (mainMenuIndex == PARAMS) {

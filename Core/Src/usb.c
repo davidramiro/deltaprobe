@@ -10,6 +10,16 @@
 #include "usb_descriptors.h"
 #include "usbd.h"
 
+/**
+ * @brief Triggers a mouse action based on the current menu index and measures the execution time.
+ *
+ * @details TIM2 is used for latency measurement with microsecond precision. Timer gets reset at first.
+ * HID mouse report depending on the `mainMenuIndex` (click or move) gets prepared.
+ * It waits for the USB HID interface to be ready. If a timeout occurs (6 seconds),
+ * it triggers an error state. Finally, it sends the report and returns the timer counter value.
+ *
+ * @return uint32_t The timer counter value at the moment of return.
+ */
 uint32_t startMouseAction() {
   HAL_TIM_Base_Stop_IT(&htim2);
   __HAL_TIM_SET_COUNTER(&htim2, 0);
@@ -39,6 +49,15 @@ uint32_t startMouseAction() {
   return TIM2->CNT;
 }
 
+/**
+ * @brief Generates a random mouse movement report and sends it via USB HID.
+ *
+ * @details The mouse report contains random X and Y coordinates ranging from -3 to 3 pixels.
+ * The function waits for the USB HID interface to become ready. If a timeout occurs
+ * (6 seconds), it triggers an error state by turning on the error LED,
+ * displaying a message, and delaying before returning.
+ * Upon successful transmission, it flashes the info LED to indicate completion.
+ */
 void randomMouseMove() {
   hid_mouse_report_t report = {
       .wheel = 0,
@@ -65,8 +84,16 @@ void randomMouseMove() {
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
 }
 
+/**
+ * @brief Resets mouse state by sending HID input
+ *
+ * @details To be used after measurement with @ref startMouseAction is finished. 
+ * Depending on `mainMenuIndex`, sets `buttons` to 0 for a releasing or `x` and `y` to -127 for a move back to
+ * the original position. It waits for the USB HID interface to be ready.
+ * If a timeout occurs (6 seconds), it triggers an error state by flashing the error LED and displaying a message.
+ * Finally, it sends the report.
+ */
 void stopMouseAction() {
-
   hid_mouse_report_t report = {.wheel = 0, .pan = 0};
 
   if (mainMenuIndex == CLICK) {
