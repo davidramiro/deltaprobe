@@ -270,13 +270,31 @@ void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms) {
   u8g2_SendBuffer(&u8g2);
 }
 
-void drawError(char *error) {
-  u8g2_ClearBuffer(&u8g2);
+void drawError(char *head, char *l1, char *l2) {
 
-  u8g2_SetFont(&u8g2, DP_FONT_LARGE);
-  u8g2_DrawStr(&u8g2, 10, 50, error);
+  u8g2_SetDrawColor(&u8g2, 2);
+  u8g2_DrawBox(&u8g2, 2, 45, 123, 39);
+
+  u8g2_SetDrawColor(&u8g2, 1);
+
+  u8g2_DrawXBM(&u8g2, 1, 44, 126, 42, menu_selection_2x_bitmap);
+
+  u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+
+  uint8_t w = u8g2_GetStrWidth(&u8g2, head);
+  u8g2_DrawStr(&u8g2, 69 - (w / 2), 59, head);
+
+  u8g2_DrawXBM(&u8g2, 7, 57, 16, 16, warning_bitmap);
+
+  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
+  w = u8g2_GetStrWidth(&u8g2, l1);
+  u8g2_DrawStr(&u8g2, 69 - (w / 2), 70, l1);
+  w = u8g2_GetStrWidth(&u8g2, l2);
+  u8g2_DrawStr(&u8g2, 69 - (w / 2), 80, l2);
 
   u8g2_SendBuffer(&u8g2);
+
+  HAL_Delay(ERROR_SCREEN_MS);
 }
 
 void drawJigglerScreen(uint8_t countdown) {

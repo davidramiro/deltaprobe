@@ -12,9 +12,11 @@
 
 /**
  * @brief Triggers a mouse action based on the current menu index.
- * @details To be used as the first action within a latency measurement. 
- * Depending on `mainMenuIndex`, either clicks mouse1 or moves by 127px x, 127px y. It waits for the USB HID interface to be ready.
- * If a timeout occurs (6 seconds), it triggers an error state by flashing the error LED and displaying a message.
+ * @details To be used as the first action within a latency measurement.
+ * Depending on `mainMenuIndex`, either clicks mouse1 or moves by 127px x, 127px
+ * y. It waits for the USB HID interface to be ready. If a timeout occurs (6
+ * seconds), it triggers an error state by flashing the error LED and displaying
+ * a message.
  * @return int8_t Error code
  */
 int8_t startMouseAction() {
@@ -30,8 +32,7 @@ int8_t startMouseAction() {
     tud_task();
     if (TIM2->CNT > 6000000) {
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-      drawError("USB timeout. Connected?");
-      HAL_Delay(2000);
+      drawError("USB timeout", "Check USB", "connection");
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
       return 1;
     }
@@ -45,11 +46,11 @@ int8_t startMouseAction() {
 /**
  * @brief Generates a random mouse movement report and sends it via USB HID.
  *
- * @details The mouse report contains random X and Y coordinates ranging from -3 to 3 pixels.
- * The function waits for the USB HID interface to become ready. If a timeout occurs
- * (6 seconds), it triggers an error state by turning on the error LED,
- * displaying a message, and delaying before returning.
- * Upon successful transmission, it flashes the info LED to indicate completion.
+ * @details The mouse report contains random X and Y coordinates ranging from -3
+ * to 3 pixels. The function waits for the USB HID interface to become ready. If
+ * a timeout occurs (6 seconds), it triggers an error state by turning on the
+ * error LED, displaying a message, and delaying before returning. Upon
+ * successful transmission, it flashes the info LED to indicate completion.
  */
 void randomMouseMove() {
   hid_mouse_report_t report = {
@@ -63,8 +64,7 @@ void randomMouseMove() {
     tud_task();
     if (TIM2->CNT > 6000000) {
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-      drawError("USB timeout. Connected?");
-      HAL_Delay(2000);
+      drawError("USB timeout", "Check USB", "connection");
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
       return;
     }
@@ -80,11 +80,12 @@ void randomMouseMove() {
 /**
  * @brief Resets mouse state by sending HID input
  *
- * @details To be used after measurement with @ref startMouseAction is finished. 
- * Depending on `mainMenuIndex`, sets `buttons` to 0 for a releasing or `x` and `y` to -127 for a move back to
- * the original position. It waits for the USB HID interface to be ready.
- * If a timeout occurs (6 seconds), it triggers an error state by flashing the error LED and displaying a message.
- * Finally, it sends the report.
+ * @details To be used after measurement with @ref startMouseAction is finished.
+ * Depending on `mainMenuIndex`, sets `buttons` to 0 for a releasing or `x` and
+ * `y` to -127 for a move back to the original position. It waits for the USB
+ * HID interface to be ready. If a timeout occurs (6 seconds), it triggers an
+ * error state by flashing the error LED and displaying a message. Finally, it
+ * sends the report.
  * @return int8_t Error code
  */
 int8_t stopMouseAction() {
@@ -100,8 +101,7 @@ int8_t stopMouseAction() {
     tud_task();
     if (TIM2->CNT > 6000000) {
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-      drawError("USB timeout. Connected?");
-      HAL_Delay(2000);
+      drawError("USB timeout", "Check USB", "connection");
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
       return 1;
     }
