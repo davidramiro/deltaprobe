@@ -35,12 +35,15 @@ FlashStatus saveToFlash(void) {
     return FLASH_OK;
   }
 
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
+
   drawFlashScreen(1);
 
   HAL_StatusTypeDef status;
 
   status = HAL_FLASH_Unlock();
   if (status != HAL_OK) {
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_UNLOCK;
   }
 
@@ -56,6 +59,7 @@ FlashStatus saveToFlash(void) {
   status = HAL_FLASHEx_Erase(&eraseInit, &sectorError);
   if (status != HAL_OK) {
     HAL_FLASH_Lock();
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_ERASE;
   }
 
@@ -65,6 +69,7 @@ FlashStatus saveToFlash(void) {
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, CYCLES_MEM_ADDR, num_cycles);
   if (status != HAL_OK) {
     HAL_FLASH_Lock();
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_PROGRAM_CYCLES;
   }
 
@@ -74,6 +79,7 @@ FlashStatus saveToFlash(void) {
                              sensor_threshold);
   if (status != HAL_OK) {
     HAL_FLASH_Lock();
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_PROGRAM_THRESHOLD;
   }
 
@@ -83,6 +89,7 @@ FlashStatus saveToFlash(void) {
                              packedChecksum(num_cycles, sensor_threshold));
   if (status != HAL_OK) {
     HAL_FLASH_Lock();
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_PROGRAM_CHECKSUM;
   }
 
@@ -96,8 +103,11 @@ FlashStatus saveToFlash(void) {
 
   if (cycles_read != num_cycles || threshold_read != sensor_threshold ||
       checksum_read != packedChecksum(num_cycles, sensor_threshold)) {
+    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_VERIFY;
   }
+
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
 
   return FLASH_OK;
 }
