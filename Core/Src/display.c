@@ -18,7 +18,7 @@ void drawSplashScreen(void) {
   u8g2_SendBuffer(&u8g2);
 }
 
-void drawStartupScreen(uint8_t mode) {
+void drawStartupScreen() {
   u8g2_ClearBuffer(&u8g2);
 
   u8g2_SetFont(&u8g2, DP_FONT_LARGE);
@@ -27,7 +27,7 @@ void drawStartupScreen(uint8_t mode) {
   u8g2_SetFont(&u8g2, DP_FONT_SMALL);
   u8g2_DrawStr(&u8g2, 60, 26, "davidramiro");
 
-  drawMainMenuInline(mode);
+  drawMainMenuInline();
 
   u8g2_SendBuffer(&u8g2);
 }
@@ -64,21 +64,37 @@ void drawSensorBarInline(void) {
   u8g2_DrawRBox(&u8g2, 2, 119, (uint8_t)bar_w_f, 6, 2);
 }
 
-void drawMainMenuInline(uint8_t index) {
-  const uint8_t selectorY = (uint8_t)(31 + index * 24);
+void drawMainMenuInline() {
+  if (mainMenuIndex == LATENCY) {
+    u8g2_DrawXBMP(&u8g2, 2, 31, 126, 42, menu_selection_2x_bitmap);
+    u8g2_DrawXBM(&u8g2, 29, 57, 3, 5, left_bitmap);
+    u8g2_DrawXBM(&u8g2, 115, 57, 3, 5, right_bitmap);
+  } else {
+    const uint8_t selectorY = (uint8_t)(55 + mainMenuIndex * 24);
+    u8g2_DrawXBMP(&u8g2, 2, selectorY, 126, 21, menu_selection_bitmap);
+  }
 
-  u8g2_DrawXBMP(&u8g2, 2, selectorY, 128, 21, menu_selection_bitmap);
+  u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+  u8g2_DrawStr(&u8g2, 31, 49, "LATENCY TEST");
 
-  u8g2_DrawXBMP(&u8g2, 9, 33, 15, 16, click_bitmap);
-  u8g2_DrawXBMP(&u8g2, 12, 57, 11, 16, move_bitmap);
+  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
+
+  if (mainModeIndex == CLICK) {
+    u8g2_DrawStr(&u8g2, 38, 63, " CLICK MODE ");
+    u8g2_DrawXBMP(&u8g2, 8, 44, 15, 16, click_bitmap);
+  } else if (mainModeIndex == MOVE) {
+    u8g2_DrawStr(&u8g2, 35, 63, "  MOVE MODE  ");
+    u8g2_DrawXBMP(&u8g2, 10, 44, 11, 16, move_bitmap);
+  } else if (mainModeIndex == EXTERNAL) {
+    u8g2_DrawStr(&u8g2, 35, 63, "EXTERNAL MODE");
+    u8g2_DrawXBMP(&u8g2, 8, 44, 16, 16, external_bitmap);
+  }
+
   u8g2_DrawXBMP(&u8g2, 8, 81, 17, 16, jiggler_bitmap);
   u8g2_DrawXBMP(&u8g2, 8, 105, 16, 16, cogwheel_bitmap);
 
-  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-  u8g2_DrawStr(&u8g2, 40, 45, "CLICK MODE");
-  u8g2_DrawStr(&u8g2, 40, 69, "MOVE MODE");
-  u8g2_DrawStr(&u8g2, 43, 93, "JIGGLER");
-  u8g2_DrawStr(&u8g2, 40, 117, "PARAMETERS");
+  u8g2_DrawStr(&u8g2, 53, 93, "JIGGLER");
+  u8g2_DrawStr(&u8g2, 46, 117, "PARAMETERS");
 }
 
 void drawParamsMenu(uint8_t index) {
@@ -91,7 +107,7 @@ void drawParamsMenu(uint8_t index) {
   u8g2_SetFont(&u8g2, DP_FONT_SMALL);
   snprintf(value_buf, sizeof(value_buf), "%d", (int)num_cycles);
   int str_width = u8g2_GetStrWidth(&u8g2, value_buf);
-  u8g2_DrawStr(&u8g2,  110 - str_width / 2, 14, value_buf);
+  u8g2_DrawStr(&u8g2, 110 - str_width / 2, 14, value_buf);
   snprintf(value_buf, sizeof(value_buf), "%d", (int)sensor_threshold);
   str_width = u8g2_GetStrWidth(&u8g2, value_buf);
   u8g2_DrawStr(&u8g2, 110 - str_width / 2, 14 + 24, value_buf);

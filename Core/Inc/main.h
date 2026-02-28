@@ -130,10 +130,11 @@ extern volatile uint8_t wakeup_requested;
 extern volatile uint8_t display_sleeping;
 
 enum ParamMenuSelector { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 };
-
-enum MainMenuSelector { CLICK = 0, MOVE = 1, JIGGLER = 2, PARAMS = 3 };
+enum MainMenuSelector { LATENCY = 0, JIGGLER = 1, PARAMS = 2 };
+enum MainModeSelector { CLICK = 0, MOVE = 1, EXTERNAL = 2 };
 
 extern enum MainMenuSelector mainMenuIndex;
+extern enum MainModeSelector mainModeIndex;
 extern enum ParamMenuSelector paramMenuIndex;
 
 /* USER CODE END Private defines */

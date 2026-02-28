@@ -8,7 +8,9 @@ extern const unsigned char click_bitmap[];
 extern const unsigned char move_bitmap[];
 
 extern const unsigned char menu_selection_bitmap[];
+extern const unsigned char menu_selection_2x_bitmap[];
 extern const unsigned char cogwheel_bitmap[];
+extern const unsigned char external_bitmap[];
 
 extern const unsigned char left_bitmap[];
 extern const unsigned char right_bitmap[];

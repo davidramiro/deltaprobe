@@ -76,8 +76,9 @@ static volatile uint8_t debounce_running = 0;
 static volatile uint8_t jiggle_interrupt_counter = 0;
 static volatile uint16_t standby_interrupt_counter = 0;
 
-enum MainMenuSelector mainMenuIndex = CLICK;
+enum MainMenuSelector mainMenuIndex = LATENCY;
 enum ParamMenuSelector paramMenuIndex = CYCLES;
+enum MainModeSelector mainModeIndex = CLICK;
 u8g2_t u8g2;
 
 /* USER CODE END PV */
@@ -359,11 +360,16 @@ int main(void) {
 
     // wait for button press
     if (btn_center_pressed) {
-      if (mainMenuIndex == CLICK || mainMenuIndex == MOVE) {
+      if (mainMenuIndex == LATENCY) {
         uint32_t latencies_us[num_cycles] = {};
 
         while (cycle_index < num_cycles) {
-          measure(latencies_us);
+          int8_t error = measure(latencies_us);
+
+          if (error) {
+            cycle_index = 0;
+            break;
+          }
           cycle_index++;
         }
 
@@ -394,7 +400,7 @@ int main(void) {
       }
     }
 
-    drawStartupScreen(mainMenuIndex);
+    drawStartupScreen();
 
     HAL_Delay(10);
 

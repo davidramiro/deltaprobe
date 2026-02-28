@@ -34,13 +34,27 @@ uint32_t readAveragedADC() {
  * @brief Sends a HID event, measures latency in microseconds until ADC value
  * changes beyond threshold.
  * @param latencies_us Array to store the measured latencies in microseconds.
+ * @return int8_t Error code
  */
-void measure(uint32_t latencies_us[]) {
+int8_t measure(uint32_t latencies_us[]) {
   const uint32_t baseline = readADC();
 
   drawMeasurement(baseline, -1, -1);
 
-  const uint32_t start = startMouseAction();
+  HAL_TIM_Base_Stop_IT(&htim2);
+  __HAL_TIM_SET_COUNTER(&htim2, 0);
+  HAL_TIM_Base_Start_IT(&htim2);
+
+  if (mainModeIndex == EXTERNAL) {
+    HAL_GPIO_WritePin(EXT_TRIGGER_GPIO_Port, EXT_TRIGGER_Pin, GPIO_PIN_SET);
+  } else {
+    int8_t error = startMouseAction();
+    if (error) {
+      return;
+    }
+  }
+
+  const uint32_t start = TIM2->CNT;
 
   while (1) {
     tud_task();
@@ -49,7 +63,15 @@ void measure(uint32_t latencies_us[]) {
 
     if (abs(delta) > sensor_threshold) {
       uint32_t latency = (uint32_t)__HAL_TIM_GET_COUNTER(&htim2) - start;
-      stopMouseAction();
+      if (mainModeIndex == EXTERNAL) {
+        HAL_GPIO_WritePin(EXT_TRIGGER_GPIO_Port, EXT_TRIGGER_Pin,
+                          GPIO_PIN_RESET);
+      } else {
+        int8_t error = stopMouseAction();
+        if (error) {
+          return;
+        }
+      }
 
       if (cycle_index < num_cycles) {
         latencies_us[cycle_index] = latency;

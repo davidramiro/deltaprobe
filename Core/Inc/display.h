@@ -9,11 +9,11 @@
 #define DP_FONT_MEDIUM u8g2_font_NokiaLargeBold_tr
 
 void drawSplashScreen(void);
-void drawStartupScreen(uint8_t mode);
+void drawStartupScreen();
 void drawSensorBarInline();
 void drawMeasurement(uint32_t baseline, uint32_t new, uint32_t latency);
 void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms);
-void drawMainMenuInline(uint8_t index);
+void drawMainMenuInline();
 void drawParamsMenu(uint8_t index);
 void drawError(char *error);
 void drawGraphInline(uint32_t latencies_us[]);
