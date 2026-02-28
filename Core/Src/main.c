@@ -30,6 +30,8 @@
 #include "usbd.h"
 #include "u8x8.h"
 #include "u8g2.h"
+#include "sleep.h"
+#include "buttons.h"
 
 /* USER CODE END Includes */
 
@@ -69,19 +71,9 @@ uint32_t max_adc_val;
 uint32_t min_adc_val;
 uint32_t cur_adc_val;
 
-static volatile uint8_t btn_up_pressed = 0;
-static volatile uint8_t btn_down_pressed = 0;
-static volatile uint8_t btn_left_pressed = 0;
-static volatile uint8_t btn_right_pressed = 0;
-static volatile uint8_t btn_center_pressed = 0;
-
 static volatile uint8_t debounce_running = 0;
 static volatile uint8_t jiggle_interrupt_counter = 0;
-static volatile uint8_t led_interrupt_counter = 0;
 static volatile uint16_t standby_interrupt_counter = 0;
-static volatile uint8_t sleep_requested = 0;
-static volatile uint8_t wakeup_requested = 0;
-static volatile uint8_t display_sleeping = 0;
 
 enum MainMenuSelector mainMenuIndex = CLICK;
 enum ParamMenuSelector paramMenuIndex = CYCLES;
@@ -110,54 +102,6 @@ void pollParamMenuButtons();
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static inline uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin)
-{
-  return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET) ? 1u : 0u;
-}
-
-void handleMCUSleep() {
-  if (sleep_requested) {
-    sleep_requested = 0;
-    u8g2_SetPowerSave(&u8g2, 1);
-
-    display_sleeping = 1;
-
-    HAL_TIM_Base_Stop_IT(&htim3);
-    HAL_TIM_Base_Stop_IT(&htim4);
-    HAL_SuspendTick();
-
-    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-
-    HAL_ResumeTick();
-    HAL_TIM_Base_Start_IT(&htim3);
-    HAL_TIM_Base_Start_IT(&htim4);
-
-    u8g2_SetPowerSave(&u8g2, 0);
-    display_sleeping = 0;
-    wakeup_requested = 0;
-  }
-}
-
-void handleDisplaySleep() {
-  if (display_sleeping) {
-    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, led_interrupt_counter % 5 == 0);
-  }
-  if (sleep_requested) {
-    if (!display_sleeping) {
-      u8g2_SetPowerSave(&u8g2, 1);
-      display_sleeping = 1;
-    }
-    sleep_requested = 0;
-  }
-  if (wakeup_requested) {
-    if (display_sleeping) {
-      u8g2_SetPowerSave(&u8g2, 0);
-      display_sleeping = 0;
-      HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
-    }
-  }
-  wakeup_requested = 0;
-}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -212,54 +156,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
 }
 
-void pollMainMenuButtons() {
-  if (btn_up_pressed && mainMenuIndex > CLICK) {
-    mainMenuIndex--;
-    btn_up_pressed = 0;
-  }
 
-  if (btn_down_pressed && mainMenuIndex < PARAMS) {
-    mainMenuIndex++;
-    btn_down_pressed = 0;
-  }
-}
-
-void pollParamMenuButtons() {
-  if (btn_up_pressed && paramMenuIndex > CYCLES) {
-    paramMenuIndex--;
-    btn_up_pressed = 0;
-  }
-  if (btn_down_pressed && paramMenuIndex < EXIT) {
-    paramMenuIndex++;
-    btn_down_pressed = 0;
-  }
-}
-
-void pollValueButtons() {
-  if (btn_left_pressed) {
-    if (paramMenuIndex == CYCLES) {
-      num_cycles--;
-    } else if (paramMenuIndex == THRESHOLD) {
-      if (sensor_threshold == 0) {
-        sensor_threshold = 4096;
-        return;
-      }
-      sensor_threshold--;
-    }
-  }
-
-  if (btn_right_pressed) {
-    if (paramMenuIndex == CYCLES) {
-      num_cycles++;
-    } else if (paramMenuIndex == THRESHOLD) {
-      if (sensor_threshold == 4096) {
-        sensor_threshold = 0;
-        return;
-      }
-      sensor_threshold++;
-    }
-  }
-}
 
 void populateADCVals() {
   cur_adc_val = readAveragedADC();

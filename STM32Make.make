@@ -75,11 +75,13 @@ endif
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/buttons.c \
 Core/Src/display.c \
 Core/Src/display_assets.c \
 Core/Src/flash.c \
 Core/Src/main.c \
 Core/Src/measure.c \
+Core/Src/sleep.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/syscalls.c \

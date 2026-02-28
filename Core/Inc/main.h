@@ -94,6 +94,8 @@ extern u8g2_t u8g2;
 #define JIGGLE_INTERVAL_S 30
 
 extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim4;
 extern ADC_HandleTypeDef hadc1;
 extern I2C_HandleTypeDef hi2c1;
 extern uint16_t cycle_index;
@@ -102,6 +104,17 @@ extern uint16_t sensor_threshold;
 extern uint32_t min_adc_val;
 extern uint32_t max_adc_val;
 extern uint32_t cur_adc_val;
+
+extern volatile uint8_t btn_up_pressed;
+extern volatile uint8_t btn_down_pressed;
+extern volatile uint8_t btn_left_pressed;
+extern volatile uint8_t btn_right_pressed;
+extern volatile uint8_t btn_center_pressed;
+
+extern volatile uint8_t led_interrupt_counter;
+extern volatile uint8_t sleep_requested;
+extern volatile uint8_t wakeup_requested;
+extern volatile uint8_t display_sleeping;
 
 enum ParamMenuSelector {
   CYCLES = 0,
