@@ -19,4 +19,4 @@ typedef enum {
 
 FlashStatus saveToFlash(void);
 void readFlash(void);
-uint32_t checksum(uint8_t val8, uint16_t val16);
+uint32_t checksum(uint8_t cycles, uint16_t threshold, uint8_t channel);

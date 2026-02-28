@@ -5,11 +5,11 @@
 
 uint32_t checksum(const uint8_t cycles, const uint16_t threshold,
                   const uint8_t channel) {
-  uint32_t sum = 0xDEADBEEFu; // Magic seed (not blank flash)
+  uint32_t sum = 0xDEADBEEFu;
 
   sum ^= cycles;
-  sum ^= threshold;
-  sum ^= channel;
+  sum ^= (threshold << 8);
+  sum ^= (channel << 24);
 
   return sum;
 }
