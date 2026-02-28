@@ -157,10 +157,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM4) {
     
     if (!display_sleeping) { 
-      if (standby_interrupt_counter == 2) {
+      if (standby_interrupt_counter == DISPLAY_SLEEP_TIMEOUT_S / 5) {
           sleep_requested = 1;
       }
-      if (standby_interrupt_counter < 2) {
+      if (standby_interrupt_counter < DISPLAY_SLEEP_TIMEOUT_S / 5) {
           standby_interrupt_counter++;
       }
     }
