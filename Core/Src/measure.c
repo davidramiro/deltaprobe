@@ -31,7 +31,8 @@ uint32_t readAveragedADC() {
 }
 
 /**
- * @brief Sends a HID event, measures latency in microseconds until ADC value changes beyond threshold.
+ * @brief Sends a HID event, measures latency in microseconds until ADC value
+ * changes beyond threshold.
  * @param latencies_us Array to store the measured latencies in microseconds.
  */
 void measure(uint32_t latencies_us[]) {
@@ -64,10 +65,13 @@ void measure(uint32_t latencies_us[]) {
 }
 
 /**
- * @brief Calculates the mean and standard deviation of latency measurements and converts them to milliseconds.
+ * @brief Calculates the mean and standard deviation of latency measurements and
+ * converts them to milliseconds.
  * @param latencies_us Array containing latency measurements in microseconds.
- * @param mean_ms Pointer to a float where the mean latency in milliseconds will be stored.
- * @param sd_ms Pointer to a float where the standard deviation in milliseconds will be stored.
+ * @param mean_ms Pointer to a float where the mean latency in milliseconds will
+ * be stored.
+ * @param sd_ms Pointer to a float where the standard deviation in milliseconds
+ * will be stored.
  */
 void computeStatsMs(uint32_t latencies_us[], float *mean_ms, float *sd_ms) {
   float sum_us = 0.0f;

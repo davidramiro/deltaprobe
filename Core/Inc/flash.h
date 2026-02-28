@@ -1,9 +1,10 @@
 #pragma once
+#include <stdint.h>
 
 #define CYCLES_MEM_ADDR 0x08060000
-#define THRESHOLD_MEM_ADDR 0x08060010
-#define CHECKSUM_MEM_ADDR 0x08060020
-#include <stdint.h>
+#define THRESHOLD_MEM_ADDR 0x08060004
+#define ADC_CHANNEL_MEM_ADDR 0x08060008
+#define CHECKSUM_MEM_ADDR 0x08060010
 
 typedef enum {
   FLASH_OK = 0,
@@ -11,10 +12,11 @@ typedef enum {
   FLASH_ERROR_ERASE,
   FLASH_ERROR_PROGRAM_CYCLES,
   FLASH_ERROR_PROGRAM_THRESHOLD,
+  FLASH_ERROR_PROGRAM_SENSOR,
   FLASH_ERROR_PROGRAM_CHECKSUM,
   FLASH_ERROR_VERIFY
 } FlashStatus;
 
 FlashStatus saveToFlash(void);
 void readFlash(void);
-uint32_t packedChecksum(uint8_t val8, uint16_t val16);
+uint32_t checksum(uint8_t cycles, uint16_t threshold, uint8_t channel);

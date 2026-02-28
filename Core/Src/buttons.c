@@ -8,9 +8,9 @@ volatile uint8_t btn_center_pressed = 0;
 
 /**
  * @brief Handles main menu navigation.
- * Decrements the menu index if the up button is pressed and the index is greater than CLICK.
- * Increments the menu index if the down button is pressed and the index is less than PARAMS.
- * Clears the button flags after processing.
+ * Decrements the menu index if the up button is pressed and the index is
+ * greater than CLICK. Increments the menu index if the down button is pressed
+ * and the index is less than PARAMS. Clears the button flags after processing.
  */
 void pollMainMenuButtons() {
   if (btn_up_pressed && mainMenuIndex > CLICK) {
@@ -26,9 +26,10 @@ void pollMainMenuButtons() {
 
 /**
  * @brief Handles navigation within the parameter menu.
- * @details Decrements the menu index if the up button is pressed and the index is greater than CYCLES.
- * Increments the menu index if the down button is pressed and the index is less than EXIT.
- * Clears the button flags after processing.
+ * @details Decrements the menu index if the up button is pressed and the index
+ * is greater than CYCLES. Increments the menu index if the down button is
+ * pressed and the index is less than EXIT. Clears the button flags after
+ * processing.
  */
 void pollParamMenuButtons() {
   if (btn_up_pressed && paramMenuIndex > CYCLES) {
@@ -41,7 +42,7 @@ void pollParamMenuButtons() {
   }
 }
 
- /**
+/**
  * @brief Adjusts configuration values based on button inputs.
  *
  * Checks the current menu index to determine which variable to modify.
@@ -59,6 +60,16 @@ void pollValueButtons() {
         return;
       }
       sensor_threshold--;
+    } else if (paramMenuIndex == SENSOR) {
+      if (adc_channel == 4) {
+        adc_channel = 1;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      } else if (adc_channel == 1) {
+        adc_channel = 4;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      }
     }
   }
 
@@ -71,6 +82,16 @@ void pollValueButtons() {
         return;
       }
       sensor_threshold++;
+    } else if (paramMenuIndex == SENSOR) {
+      if (adc_channel == 4) {
+        adc_channel = 1;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      } else if (adc_channel == 1) {
+        adc_channel = 4;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      }
     }
   }
 }

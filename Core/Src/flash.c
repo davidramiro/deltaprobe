@@ -3,6 +3,17 @@
 #include "display.h"
 #include "main.h"
 
+uint32_t checksum(const uint8_t cycles, const uint16_t threshold,
+                  const uint8_t channel) {
+  uint32_t sum = 0xDEADBEEFu;
+
+  sum ^= cycles;
+  sum ^= (threshold << 8);
+  sum ^= (channel << 24);
+
+  return sum;
+}
+
 /**
  *  @brief Reads configuration data from flash memory and validates it.
  */
@@ -10,13 +21,16 @@ void readFlash(void) {
   uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
   uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
   uint32_t checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
+  uint8_t adc_channel_read = *(__IO uint32_t *)ADC_CHANNEL_MEM_ADDR;
 
-  if (packedChecksum(cycles_read, threshold_read) != checksum_read) {
+  if (checksum(cycles_read, threshold_read, adc_channel_read) !=
+      checksum_read) {
     // checksum mismatched, values in flash outdated or never written.
     saveToFlash();
   } else {
     num_cycles = cycles_read;
     sensor_threshold = threshold_read;
+    adc_channel = adc_channel_read;
   }
 }
 
@@ -25,13 +39,15 @@ void readFlash(void) {
  * @return FlashStatus Status of the save operation.
  */
 FlashStatus saveToFlash(void) {
-  uint8_t cycles = *(__IO uint32_t *)CYCLES_MEM_ADDR;
-  uint16_t threshold = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
-  uint32_t checksum = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
+  uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
+  uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
+  uint32_t checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
+  uint8_t channel_read = *(__IO uint32_t *)ADC_CHANNEL_MEM_ADDR;
 
-  // no need to write if data unchanged
-  if (cycles == num_cycles && threshold == sensor_threshold &&
-      checksum == packedChecksum(cycles, threshold)) {
+  // No need to write if data unchanged
+  if (cycles_read == num_cycles && threshold_read == sensor_threshold &&
+      channel_read == adc_channel &&
+      checksum_read == checksum(cycles_read, threshold_read, channel_read)) {
     return FLASH_OK;
   }
 
@@ -85,25 +101,35 @@ FlashStatus saveToFlash(void) {
 
   drawFlashScreen(5);
 
-  status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, CHECKSUM_MEM_ADDR,
-                             packedChecksum(num_cycles, sensor_threshold));
+  status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, ADC_CHANNEL_MEM_ADDR,
+                             adc_channel);
   if (status != HAL_OK) {
     HAL_FLASH_Lock();
-    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
+    return FLASH_ERROR_PROGRAM_SENSOR;
+  }
+
+  drawFlashScreen(6);
+
+  status =
+      HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, CHECKSUM_MEM_ADDR,
+                        checksum(num_cycles, sensor_threshold, adc_channel));
+  if (status != HAL_OK) {
+    HAL_FLASH_Lock();
     return FLASH_ERROR_PROGRAM_CHECKSUM;
   }
 
   HAL_FLASH_Lock();
 
-  drawFlashScreen(6);
+  drawFlashScreen(7);
 
-  uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
-  uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
-  uint32_t checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
+  cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
+  threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
+  channel_read = *(__IO uint32_t *)ADC_CHANNEL_MEM_ADDR;
+  checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
 
   if (cycles_read != num_cycles || threshold_read != sensor_threshold ||
-      checksum_read != packedChecksum(num_cycles, sensor_threshold)) {
-    HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
+      channel_read != adc_channel ||
+      checksum_read != checksum(num_cycles, sensor_threshold, channel_read)) {
     return FLASH_ERROR_VERIFY;
   }
 

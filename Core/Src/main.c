@@ -66,6 +66,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 uint16_t sensor_threshold = DEFAULT_THRESHOLD;
 uint8_t num_cycles = DEFAULT_NUM_CYCLES;
+uint8_t adc_channel = DEFAULT_ADC_CHANNEL;
 uint16_t cycle_index = 0;
 uint32_t max_adc_val;
 uint32_t min_adc_val;
@@ -97,7 +98,6 @@ static void MX_TIM4_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 
 /**
  * @brief  This function is called when a timer interrupt occurs.
@@ -140,7 +140,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   }
 }
 
-
 /**
  * @brief  This function handles the EXTI interrupt callback.
  * @details Used for passing button events to the application with some debounce
@@ -169,12 +168,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-
 /**
- * @brief Reads the current ADC value and updates the global minimum and maximum values.
- * @details This function calls readAveragedADC() to get an average of the current ADC  value.
- * It then compares this value against the stored min_adc_val and max_adc_val, updating the respective
- * global variables if the new value is lower or higher.
+ * @brief Reads the current ADC value and updates the global minimum and maximum
+ * values.
+ * @details This function calls readAveragedADC() to get an average of the
+ * current ADC  value. It then compares this value against the stored
+ * min_adc_val and max_adc_val, updating the respective global variables if the
+ * new value is lower or higher.
  *
  * @retval None
  */
@@ -189,9 +189,38 @@ void populateADCVals() {
 }
 
 /**
+ * @brief Switches the ADC channel for the photon sensor.
+ *
+ * @details ADC1 connects PA1 (internal) and PA5 (external) sensors. This method
+ * switches the channel depending on user setting/value from flash.
+ *
+ * @retval None
+ */
+void updateADCChannel() {
+  HAL_ADC_Stop(&hadc1);
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  if (adc_channel == 1) {
+    sConfig.Channel = ADC_CHANNEL_1;
+  } else if (adc_channel == 4) {
+    sConfig.Channel = ADC_CHANNEL_4;
+  }
+
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
+    HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+    drawError("ADC Channel error!");
+    HAL_Delay(2000);
+    HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
+  }
+}
+
+/**
  * @brief This function runs the parameter menu loop.
  * @details It can sleep the MCU, polls buttons, polls ADC, and draws the menu.
- * If the exit button is pressed, it saves to flash. If flash fails, it shows an error.
+ * If the exit button is pressed, it saves to flash. If flash fails, it shows an
+ * error.
  * @retval None
  */
 void menuRoutine() {
@@ -211,6 +240,9 @@ void menuRoutine() {
           HAL_Delay(2000);
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
+
+        updateADCChannel();
+
         HAL_Delay(50);
         paramMenuIndex = 0;
         break;
@@ -222,8 +254,8 @@ void menuRoutine() {
 /**
  * @brief This function runs the jiggle routine.
  * It initializes a counter, waits for debounce, then enters a loop.
- * It draws a countdown screen, moves the mouse randomly after JIGGLE_INTERVAL_S seconds,
- * and exits if the center button is pressed.
+ * It draws a countdown screen, moves the mouse randomly after JIGGLE_INTERVAL_S
+ * seconds, and exits if the center button is pressed.
  */
 void jiggleRoutine() {
   jiggle_interrupt_counter = 0;
@@ -310,6 +342,8 @@ int main(void) {
   HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
 
   readFlash();
+
+  updateADCChannel();
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
@@ -452,7 +486,7 @@ static void MX_ADC1_Init(void) {
   /** Configure for the selected ADC regular channel its corresponding rank in
    * the sequencer and its sample time.
    */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
@@ -692,7 +726,17 @@ static void MX_GPIO_Init(void) {
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(EXT_TRIGGER_GPIO_Port, EXT_TRIGGER_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, ERR_LED_Pin | INF_LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : EXT_TRIGGER_Pin */
+  GPIO_InitStruct.Pin = EXT_TRIGGER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(EXT_TRIGGER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN_LEFT_Pin BTN_CENTER_Pin */
   GPIO_InitStruct.Pin = BTN_LEFT_Pin | BTN_CENTER_Pin;

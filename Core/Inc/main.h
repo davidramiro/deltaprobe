@@ -70,6 +70,12 @@ extern u8g2_t u8g2;
 
 /* Private defines -----------------------------------------------------------*/
 #define IT_DEBOUNCE_US 20000
+#define INT_SENSOR_Pin GPIO_PIN_1
+#define INT_SENSOR_GPIO_Port GPIOA
+#define EXT_SENSOR_Pin GPIO_PIN_4
+#define EXT_SENSOR_GPIO_Port GPIOA
+#define EXT_TRIGGER_Pin GPIO_PIN_5
+#define EXT_TRIGGER_GPIO_Port GPIOA
 #define BTN_LEFT_Pin GPIO_PIN_6
 #define BTN_LEFT_GPIO_Port GPIOA
 #define BTN_LEFT_EXTI_IRQn EXTI9_5_IRQn
@@ -93,8 +99,10 @@ extern u8g2_t u8g2;
 /* USER CODE BEGIN Private defines */
 #define DEFAULT_THRESHOLD 40
 #define DEFAULT_NUM_CYCLES 10
+#define DEFAULT_ADC_CHANNEL 1
 #define DISPLAY_SLEEP_TIMEOUT_S 60
 #define JIGGLE_INTERVAL_S 30
+#define ADDITIONAL_DEBOUNCE_MS 50
 
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
@@ -104,6 +112,7 @@ extern I2C_HandleTypeDef hi2c1;
 extern uint16_t cycle_index;
 extern uint8_t num_cycles;
 extern uint16_t sensor_threshold;
+extern uint8_t adc_channel;
 extern uint32_t min_adc_val;
 extern uint32_t max_adc_val;
 extern uint32_t cur_adc_val;
@@ -119,7 +128,7 @@ extern volatile uint8_t sleep_requested;
 extern volatile uint8_t wakeup_requested;
 extern volatile uint8_t display_sleeping;
 
-enum ParamMenuSelector { CYCLES = 0, THRESHOLD = 1, EXIT = 2 };
+enum ParamMenuSelector { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 };
 
 enum MainMenuSelector { CLICK = 0, MOVE = 1, JIGGLER = 2, PARAMS = 3 };
 
