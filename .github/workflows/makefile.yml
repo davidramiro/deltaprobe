@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
     - name: install GNU arm embedded toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1
     - name: Build
