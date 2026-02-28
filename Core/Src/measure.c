@@ -50,7 +50,7 @@ int8_t measure(uint32_t latencies_us[]) {
   } else {
     int8_t error = startMouseAction();
     if (error) {
-      return;
+      return error;
     }
   }
 
@@ -69,7 +69,7 @@ int8_t measure(uint32_t latencies_us[]) {
       } else {
         int8_t error = stopMouseAction();
         if (error) {
-          return;
+          return error;
         }
       }
 
@@ -84,6 +84,8 @@ int8_t measure(uint32_t latencies_us[]) {
       break;
     }
   }
+
+  return 0;
 }
 
 /**

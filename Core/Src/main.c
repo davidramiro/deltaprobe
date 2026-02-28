@@ -211,8 +211,7 @@ void updateADCChannel() {
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
     HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-    drawError("ADC Channel error!");
-    HAL_Delay(2000);
+    drawError("HAL Error!", "Could not", "set ADC channel.");
     HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
   }
 }
@@ -237,7 +236,7 @@ void menuRoutine() {
       if (paramMenuIndex == EXIT) {
         if (saveToFlash() != FLASH_OK) {
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-          drawError("Flash error!");
+          drawError("Flash error!", "Could not", "save to flash.");
           HAL_Delay(2000);
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
