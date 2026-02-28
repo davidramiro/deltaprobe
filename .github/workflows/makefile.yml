@@ -14,4 +14,4 @@ jobs:
     - name: install GNU arm embedded toolchain
       uses: carlosperate/arm-none-eabi-gcc-action@v1
     - name: Build
-      run: make
+      run: make -f STM32Make.make
