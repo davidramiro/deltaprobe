@@ -3,6 +3,7 @@
 #define CYCLES_MEM_ADDR 0x08060000
 #define THRESHOLD_MEM_ADDR 0x08060010
 #define CHECKSUM_MEM_ADDR 0x08060020
+#include <stdint.h>
 
 typedef enum {
   FLASH_OK = 0,
@@ -16,3 +17,4 @@ typedef enum {
 
 FlashStatus saveToFlash(void);
 void readFlash(void);
+uint32_t packedChecksum(uint8_t val8, uint16_t val16);
