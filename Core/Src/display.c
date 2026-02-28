@@ -47,18 +47,19 @@ void drawSensorBarInline(void) {
 
     float bar_units;
     if (max_adc_val == min_adc_val) {
-        bar_units = DP_W / 2.0f;
+        bar_units = 124 / 2.0f;
     } else {
-        bar_units = DP_W / (float) (max_adc_val - min_adc_val);
+        bar_units = 124 / (float) (max_adc_val - min_adc_val);
     }
-
-    u8g2_DrawFrame(&u8g2, 0, DP_H - 10, DP_W, 10);
 
     float bar_w_f = (float) cur_adc_val * bar_units;
     if (bar_w_f < 0.0f) bar_w_f = 0.0f;
-    if (bar_w_f > (float) DP_W) bar_w_f = (float) DP_W;
+    if (bar_w_f > (float) 124) bar_w_f = (float) 124;
 
-    u8g2_DrawBox(&u8g2, 0, DP_H - 10, (uint8_t) bar_w_f, 10);
+
+    u8g2_DrawRFrame(&u8g2, 0, 117, 128, 10, 3);
+    u8g2_DrawRBox(&u8g2, 2, 119, (uint8_t) bar_w_f, 6, 2);
+
 }
 
 void drawMainMenuInline(uint8_t index) {
