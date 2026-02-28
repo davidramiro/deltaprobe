@@ -66,6 +66,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 uint16_t sensor_threshold = DEFAULT_THRESHOLD ;
 uint8_t num_cycles = DEFAULT_NUM_CYCLES;
+uint8_t adc_channel = DEFAULT_ADC_CHANNEL;
 uint16_t cycle_index = 0;
 uint32_t max_adc_val;
 uint32_t min_adc_val;
@@ -156,8 +157,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
 }
 
-
-
 void populateADCVals() {
   cur_adc_val = readAveragedADC();
 
@@ -165,6 +164,27 @@ void populateADCVals() {
     min_adc_val = cur_adc_val;
   } else if (cur_adc_val > max_adc_val) {
     max_adc_val = cur_adc_val;
+  }
+}
+
+void updateADCChannel() {
+  HAL_ADC_Stop(&hadc1);
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  if (adc_channel == 1) {
+    sConfig.Channel = ADC_CHANNEL_1;
+  } else if (adc_channel == 4) {
+    sConfig.Channel = ADC_CHANNEL_4;
+  }
+
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+    drawError("ADC Channel error!");
+    HAL_Delay(2000);
+    HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
   }
 }
 
@@ -185,6 +205,9 @@ void menuRoutine() {
           HAL_Delay(2000);
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
+
+        updateADCChannel();
+
         HAL_Delay(50);
         paramMenuIndex = 0;
         break;
@@ -281,6 +304,7 @@ int main(void)
 
   readFlash();
 
+  updateADCChannel();
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
@@ -424,7 +448,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -691,7 +715,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(EXT_TRIGGER_GPIO_Port, EXT_TRIGGER_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, ERR_LED_Pin|INF_LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : EXT_TRIGGER_Pin */
+  GPIO_InitStruct.Pin = EXT_TRIGGER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(EXT_TRIGGER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN_LEFT_Pin BTN_CENTER_Pin */
   GPIO_InitStruct.Pin = BTN_LEFT_Pin|BTN_CENTER_Pin;

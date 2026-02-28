@@ -39,6 +39,16 @@ void pollValueButtons() {
         return;
       }
       sensor_threshold--;
+    } else if (paramMenuIndex == SENSOR) {
+      if (adc_channel == 4) {
+        adc_channel = 1;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      } else if (adc_channel == 1) {
+        adc_channel = 4;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      }
     }
   }
 
@@ -51,8 +61,20 @@ void pollValueButtons() {
         return;
       }
       sensor_threshold++;
+    } else if (paramMenuIndex == SENSOR) {
+      if (adc_channel == 4) {
+        adc_channel = 1;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      } else if (adc_channel == 1) {
+        adc_channel = 4;
+        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        return;
+      }
     }
   }
+
+  
 }
 
 uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin)

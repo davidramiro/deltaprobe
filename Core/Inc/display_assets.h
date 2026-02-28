@@ -10,8 +10,9 @@ extern const unsigned char move_bitmap[];
 extern const unsigned char menu_selection_bitmap[];
 extern const unsigned char cogwheel_bitmap[];
 
-extern const uint8_t left_bitmap[];
-extern const uint8_t right_bitmap[];
+extern const unsigned char left_bitmap[];
+extern const unsigned char right_bitmap[];
+extern const unsigned char sensor_bitmap[];
 
 extern const unsigned char cycles_bitmap[];
 extern const unsigned char threshold_bitmap[];

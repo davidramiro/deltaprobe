@@ -45,6 +45,7 @@ void drawSensorBarInline(void) {
     u8g2_DrawStr(&u8g2, (uint8_t) (DP_W / 2 - 12), DP_H - 18, cur_buf);
     u8g2_DrawStr(&u8g2, (uint8_t) (DP_W - 24), DP_H - 18, max_buf);
 
+    // TODO: cur_adc_val == 1 broken, full bar width
     float bar_units;
     if (max_adc_val == min_adc_val) {
         bar_units = 124 / 2.0f;
@@ -83,33 +84,36 @@ void drawMainMenuInline(uint8_t index) {
 void drawParamsMenu(uint8_t index) {
     u8g2_ClearBuffer(&u8g2);
 
-    const uint8_t selectorY = (uint8_t) (30 + index * 24);
-    u8g2_DrawXBMP(&u8g2, 2, selectorY, 128, 21, menu_selection_bitmap);
+    const uint8_t selectorY = (uint8_t) (1 + index * 24);
+    u8g2_DrawXBMP(&u8g2, 1, selectorY, 126, 20, menu_selection_bitmap);
 
     char value_buf[12];
-    u8g2_SetFont(&u8g2, DP_FONT_LARGE);
-    if (index == 0) {
-        snprintf(value_buf, sizeof(value_buf), "%d", (int) num_cycles);
-        u8g2_DrawStr(&u8g2, 52, 20, value_buf);
-    } else if (index == 1) {
-        snprintf(value_buf, sizeof(value_buf), "%d", (int) sensor_threshold);
-        u8g2_DrawStr(&u8g2, 52, 20, value_buf);
-    }
-
-    if (index != 2) {
-        u8g2_DrawXBMP(&u8g2, 102, 0, 21, 24, right_bitmap);
-
-        u8g2_DrawXBMP(&u8g2, 8, 0, 21, 24, left_bitmap);
-    }
-
-    u8g2_DrawXBMP(&u8g2, 8, 32, 16, 16, cycles_bitmap);
-    u8g2_DrawXBMP(&u8g2, 8, 56, 15, 16, threshold_bitmap);
-    u8g2_DrawXBMP(&u8g2, 8, 80, 15, 14, exit_bitmap);
-
     u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-    u8g2_DrawStr(&u8g2, 40, 44, "  CYCLES  ");
-    u8g2_DrawStr(&u8g2, 43, 68, "THRESHOLD");
-    u8g2_DrawStr(&u8g2, 37, 92, "SAVE & EXIT");
+    snprintf(value_buf, sizeof(value_buf), "%d", (int) num_cycles);
+    u8g2_DrawStr(&u8g2, 99, 14, value_buf);
+    snprintf(value_buf, sizeof(value_buf), "%d", (int) sensor_threshold);
+    u8g2_DrawStr(&u8g2, 99, 14 + 24, value_buf);
+
+    if (adc_channel == 1) {
+        u8g2_DrawStr(&u8g2, 99, 14 + 48, "INT");
+    } else if (adc_channel == 4) {
+        u8g2_DrawStr(&u8g2, 99, 14 + 48, "EXT");
+    }
+
+    if (index != 3) {
+        u8g2_DrawXBMP(&u8g2, 27, selectorY + 7, 3, 5, left_bitmap);
+        u8g2_DrawXBMP(&u8g2, 89, selectorY + 7, 3, 5, right_bitmap);
+    }
+
+    u8g2_DrawXBMP(&u8g2, 3, 3, 16, 16, cycles_bitmap);
+    u8g2_DrawXBMP(&u8g2, 3, 3 + 24, 15, 16, threshold_bitmap);
+    u8g2_DrawXBMP(&u8g2, 3, 3 + 48, 15, 16, sensor_bitmap);
+    u8g2_DrawXBMP(&u8g2, 3, 3 + 72, 15, 14, exit_bitmap);
+
+    u8g2_DrawStr(&u8g2, 42, 14, " CYCLES ");
+    u8g2_DrawStr(&u8g2, 33, 14 + 24, "THRESHOLD");
+    u8g2_DrawStr(&u8g2, 42, 14 + 48, "SENSOR");
+    u8g2_DrawStr(&u8g2, 42, 14 + 72, "SAVE & EXIT");
 
     drawSensorBarInline();
 
@@ -279,9 +283,9 @@ void drawJigglerScreen(uint8_t countdown) {
 void drawFlashScreen(const uint8_t progress) {
     u8g2_ClearBuffer(&u8g2);
 
-    uint8_t w = 19 * progress;
+    uint8_t w = 16 * progress;
 
-    if (progress == 6) {
+    if (progress == 7) {
         w = 118;
     }
 
