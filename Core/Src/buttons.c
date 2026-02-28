@@ -22,6 +22,26 @@ void pollMainMenuButtons() {
     mainMenuIndex++;
     btn_down_pressed = 0;
   }
+
+  if (btn_left_pressed && mainMenuIndex == LATENCY) {
+    if (mainModeIndex == CLICK) {
+      mainModeIndex = EXTERNAL;
+      btn_left_pressed = 0;
+      return;
+    }
+    mainModeIndex--;
+    btn_left_pressed = 0;
+  }
+
+  if (btn_right_pressed && mainMenuIndex == LATENCY) {
+    if (mainModeIndex == EXTERNAL) {
+      mainModeIndex = CLICK;
+      btn_right_pressed = 0;
+      return;
+    }
+    mainModeIndex++;
+    btn_right_pressed = 0;
+  }
 }
 
 /**

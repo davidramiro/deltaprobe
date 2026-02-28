@@ -11,25 +11,18 @@
 #include "usbd.h"
 
 /**
- * @brief Triggers a mouse action based on the current menu index and measures the execution time.
- *
- * @details TIM2 is used for latency measurement with microsecond precision. Timer gets reset at first.
- * HID mouse report depending on the `mainMenuIndex` (click or move) gets prepared.
- * It waits for the USB HID interface to be ready. If a timeout occurs (6 seconds),
- * it triggers an error state. Finally, it sends the report and returns the timer counter value.
- *
- * @return uint32_t The timer counter value at the moment of return.
+ * @brief Triggers a mouse action based on the current menu index.
+ * @details To be used as the first action within a latency measurement. 
+ * Depending on `mainMenuIndex`, either clicks mouse1 or moves by 127px x, 127px y. It waits for the USB HID interface to be ready.
+ * If a timeout occurs (6 seconds), it triggers an error state by flashing the error LED and displaying a message.
+ * @return int8_t Error code
  */
-uint32_t startMouseAction() {
-  HAL_TIM_Base_Stop_IT(&htim2);
-  __HAL_TIM_SET_COUNTER(&htim2, 0);
-  HAL_TIM_Base_Start_IT(&htim2);
-
+int8_t startMouseAction() {
   hid_mouse_report_t report = {.wheel = 0, .pan = 0};
 
-  if (mainMenuIndex == CLICK) {
+  if (mainModeIndex == CLICK) {
     report.buttons = 1;
-  } else if (mainMenuIndex == MOVE) {
+  } else if (mainModeIndex == MOVE) {
     report.x = 127, report.y = 127;
   }
 
@@ -40,7 +33,7 @@ uint32_t startMouseAction() {
       drawError("USB timeout. Connected?");
       HAL_Delay(2000);
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
-      return 0;
+      return 1;
     }
   }
 
@@ -92,13 +85,14 @@ void randomMouseMove() {
  * the original position. It waits for the USB HID interface to be ready.
  * If a timeout occurs (6 seconds), it triggers an error state by flashing the error LED and displaying a message.
  * Finally, it sends the report.
+ * @return int8_t Error code
  */
-void stopMouseAction() {
+int8_t stopMouseAction() {
   hid_mouse_report_t report = {.wheel = 0, .pan = 0};
 
-  if (mainMenuIndex == CLICK) {
+  if (mainModeIndex == CLICK) {
     report.buttons = 0;
-  } else if (mainMenuIndex == MOVE) {
+  } else if (mainModeIndex == MOVE) {
     report.x = -127, report.y = -127;
   }
 
@@ -109,7 +103,7 @@ void stopMouseAction() {
       drawError("USB timeout. Connected?");
       HAL_Delay(2000);
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
-      return;
+      return 1;
     }
   }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-uint32_t startMouseAction();
-void stopMouseAction();
+int8_t startMouseAction();
+int8_t stopMouseAction();
 void randomMouseMove();
