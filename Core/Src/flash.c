@@ -1,4 +1,6 @@
 #include "flash.h"
+
+#include "display.h"
 #include "main.h"
 
 uint32_t packedChecksum(const uint8_t val8, const uint16_t val16) {
@@ -31,12 +33,16 @@ FlashStatus saveToFlash(void) {
         return FLASH_OK;
     }
 
+    drawFlashScreen(1);
+
     HAL_StatusTypeDef status;
 
     status = HAL_FLASH_Unlock();
     if (status != HAL_OK) {
         return FLASH_ERROR_UNLOCK;
     }
+
+    drawFlashScreen(2);
 
     FLASH_EraseInitTypeDef eraseInit;
     eraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
@@ -51,17 +57,23 @@ FlashStatus saveToFlash(void) {
         return FLASH_ERROR_ERASE;
     }
 
+    drawFlashScreen(3);
+
     status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, CYCLES_MEM_ADDR, num_cycles);
     if (status != HAL_OK) {
         HAL_FLASH_Lock();
         return FLASH_ERROR_PROGRAM_CYCLES;
     }
 
+    drawFlashScreen(4);
+
     status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, THRESHOLD_MEM_ADDR, sensor_threshold);
     if (status != HAL_OK) {
         HAL_FLASH_Lock();
         return FLASH_ERROR_PROGRAM_THRESHOLD;
     }
+
+    drawFlashScreen(5);
 
     status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, CHECKSUM_MEM_ADDR, packedChecksum(num_cycles, sensor_threshold));
     if (status != HAL_OK) {
@@ -70,6 +82,8 @@ FlashStatus saveToFlash(void) {
     }
 
     HAL_FLASH_Lock();
+
+    drawFlashScreen(6);
 
     uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
     uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
