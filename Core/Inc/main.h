@@ -103,12 +103,14 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
 extern ADC_HandleTypeDef hadc1;
 extern I2C_HandleTypeDef hi2c1;
+extern DMA_HandleTypeDef hdma_adc1;
 extern uint16_t cycle_index;
 extern uint8_t num_cycles;
 extern uint16_t sensor_threshold;
 extern uint32_t min_adc_val;
 extern uint32_t max_adc_val;
 extern uint32_t cur_adc_val;
+extern uint16_t dma_adc[];
 
 extern volatile uint8_t btn_up_pressed;
 extern volatile uint8_t btn_down_pressed;

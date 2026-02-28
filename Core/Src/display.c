@@ -37,7 +37,7 @@ void drawSensorBarInline(void) {
   char cur_buf[6];
 
   snprintf(min_buf, sizeof(min_buf), "%lu", (unsigned long)min_adc_val);
-  snprintf(max_buf, sizeof(max_buf), "%lu", (unsigned long)max_adc_val);
+  snprintf(max_buf, sizeof(max_buf), "%lu", (unsigned long)__HAL_DMA_GET_COUNTER(&hdma_adc1));
   snprintf(cur_buf, sizeof(cur_buf), "%lu", (unsigned long)cur_adc_val);
 
   u8g2_SetFont(&u8g2, DP_FONT_SMALL);

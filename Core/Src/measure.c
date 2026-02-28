@@ -12,14 +12,7 @@
 #include "../../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
 
 uint32_t readADC() {
-  uint32_t adc_val = 0;
-  HAL_ADC_Start(&hadc1);
-  if (HAL_ADC_PollForConversion(&hadc1, 10) != HAL_TIMEOUT) {
-    adc_val = HAL_ADC_GetValue(&hadc1);
-  }
-  HAL_ADC_Stop(&hadc1);
-
-  return adc_val;
+  return (int16_t) dma_adc[4 - __HAL_DMA_GET_COUNTER(&hdma_adc1)];
 }
 
 uint32_t readAveragedADC() {
@@ -27,7 +20,7 @@ uint32_t readAveragedADC() {
   for (int i = 0; i < num_cycles; i++) {
     adc_val += readADC();
   }
-  return adc_val / num_cycles;
+  return readADC();
 }
 
 /**
