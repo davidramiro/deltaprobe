@@ -1,6 +1,6 @@
 #pragma once
-#include <stdint.h>
 #include "u8g2.h"
+#include <stdint.h>
 
 #define DP_W 128
 #define DP_H 128
@@ -15,7 +15,7 @@ void drawMeasurement(uint32_t baseline, uint32_t new, uint32_t latency);
 void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms);
 void drawMainMenuInline(uint8_t index);
 void drawParamsMenu(uint8_t index);
-void drawError(char * error);
+void drawError(char *error);
 void drawGraphInline(uint32_t latencies_us[]);
 void drawJigglerScreen(uint8_t countdown);
 void drawFlashScreen(uint8_t progress);

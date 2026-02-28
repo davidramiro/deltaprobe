@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -22,16 +22,16 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "buttons.h"
 #include "display.h"
 #include "flash.h"
 #include "measure.h"
-#include "usb.h"
-#include "tusb.h"
-#include "usbd.h"
-#include "u8x8.h"
-#include "u8g2.h"
 #include "sleep.h"
-#include "buttons.h"
+#include "tusb.h"
+#include "u8g2.h"
+#include "u8x8.h"
+#include "usb.h"
+#include "usbd.h"
 
 /* USER CODE END Includes */
 
@@ -64,7 +64,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 
-uint16_t sensor_threshold = DEFAULT_THRESHOLD ;
+uint16_t sensor_threshold = DEFAULT_THRESHOLD;
 uint8_t num_cycles = DEFAULT_NUM_CYCLES;
 uint16_t cycle_index = 0;
 uint32_t max_adc_val;
@@ -93,24 +93,30 @@ static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
-void pollMainMenuButtons();
-
-void pollParamMenuButtons();
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
+/**
+ * @brief  This function is called when a timer interrupt occurs.
+ * @details It handles three different timer events:
+ * - TIM11 is the button interrupt timer. Debounces with about 50ms.
+ * - TIM3 fires every second to provide ticks for mouse jiggler.
+ * - TIM4 fires every 5 seconds to provide ticks for the standby routine.
+ * @param  htim: Pointer to a TIM_HandleTypeDef structure that allows
+ *  identifying the interrupting timer.
+ * @retval None
+ */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM11) {
-    btn_center_pressed = btn_is_down(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin);;
-    btn_up_pressed     = btn_is_down(BTN_UP_GPIO_Port,     BTN_UP_Pin);
-    btn_down_pressed   = btn_is_down(BTN_DOWN_GPIO_Port,   BTN_DOWN_Pin);
-    btn_left_pressed   = btn_is_down(BTN_LEFT_GPIO_Port,   BTN_LEFT_Pin);
-    btn_right_pressed  = btn_is_down(BTN_RIGHT_GPIO_Port,  BTN_RIGHT_Pin);
+    btn_center_pressed = btn_is_down(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin);
+    ;
+    btn_up_pressed = btn_is_down(BTN_UP_GPIO_Port, BTN_UP_Pin);
+    btn_down_pressed = btn_is_down(BTN_DOWN_GPIO_Port, BTN_DOWN_Pin);
+    btn_left_pressed = btn_is_down(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin);
+    btn_right_pressed = btn_is_down(BTN_RIGHT_GPIO_Port, BTN_RIGHT_Pin);
 
     debounce_running = 0;
     HAL_TIM_Base_Stop_IT(&htim11);
@@ -122,21 +128,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 
   if (htim->Instance == TIM4) {
-    
-    if (!display_sleeping) { 
+
+    if (!display_sleeping) {
       if (standby_interrupt_counter == DISPLAY_SLEEP_TIMEOUT_S / 5) {
-          sleep_requested = 1;
+        sleep_requested = 1;
       }
       if (standby_interrupt_counter < DISPLAY_SLEEP_TIMEOUT_S / 5) {
-          standby_interrupt_counter++;
+        standby_interrupt_counter++;
       }
     }
   }
-
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
+
+/**
+ * @brief  This function handles the EXTI interrupt callback.
+ * @details Used for passing button events to the application with some debounce
+ * and waking up from screen standby.
+ *
+ * @param  GPIO_Pin GPIO pin number of the causing pin.
+ * @retval None
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   (void)GPIO_Pin;
 
   HAL_TIM_Base_Stop_IT(&htim4);
@@ -145,11 +158,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   standby_interrupt_counter = 0;
   HAL_TIM_Base_Start_IT(&htim4);
 
-  if (display_sleeping) { 
-      wakeup_requested = 1;
-      return;
-  }  
-    
+  if (display_sleeping) {
+    wakeup_requested = 1;
+    return;
+  }
+
   if (!debounce_running) {
     debounce_running = 1;
     HAL_TIM_Base_Start_IT(&htim11);
@@ -157,7 +170,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 
-
+/**
+ * @brief Reads the current ADC value and updates the global minimum and maximum values.
+ * @details This function calls readAveragedADC() to get an average of the current ADC  value.
+ * It then compares this value against the stored min_adc_val and max_adc_val, updating the respective
+ * global variables if the new value is lower or higher.
+ *
+ * @retval None
+ */
 void populateADCVals() {
   cur_adc_val = readAveragedADC();
 
@@ -168,6 +188,12 @@ void populateADCVals() {
   }
 }
 
+/**
+ * @brief This function runs the parameter menu loop.
+ * @details It can sleep the MCU, polls buttons, polls ADC, and draws the menu.
+ * If the exit button is pressed, it saves to flash. If flash fails, it shows an error.
+ * @retval None
+ */
 void menuRoutine() {
   populateADCVals();
   while (1) {
@@ -193,8 +219,13 @@ void menuRoutine() {
   }
 }
 
+/**
+ * @brief This function runs the jiggle routine.
+ * It initializes a counter, waits for debounce, then enters a loop.
+ * It draws a countdown screen, moves the mouse randomly after JIGGLE_INTERVAL_S seconds,
+ * and exits if the center button is pressed.
+ */
 void jiggleRoutine() {
-  
   jiggle_interrupt_counter = 0;
   HAL_Delay(50);
 
@@ -205,7 +236,7 @@ void jiggleRoutine() {
     drawJigglerScreen(JIGGLE_INTERVAL_S - jiggle_interrupt_counter);
     if (jiggle_interrupt_counter == JIGGLE_INTERVAL_S) {
       jiggle_interrupt_counter = 0;
-      
+
       randomMouseMove();
     }
 
@@ -214,17 +245,15 @@ void jiggleRoutine() {
       return;
     }
   }
-
 }
 
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
+ * @brief  The application entry point.
+ * @retval int
+ */
+int main(void) {
 
   /* USER CODE BEGIN 1 */
 
@@ -232,11 +261,12 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
+   */
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  asm (".global _printf_float");
+  asm(".global _printf_float");
 
   /* USER CODE END Init */
 
@@ -262,14 +292,14 @@ int main(void)
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
 
-  tusb_rhport_init_t dev_init = {
-    .role = TUSB_ROLE_DEVICE,
-    .speed = TUSB_SPEED_FULL
+  tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE,
+                                 .speed = TUSB_SPEED_FULL
 
   };
   tusb_init(0, &dev_init);
 
-  u8g2_Setup_sh1107_i2c_seeed_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c, u8x8_stm32_gpio_and_delay);
+  u8g2_Setup_sh1107_i2c_seeed_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c,
+                                        u8x8_stm32_gpio_and_delay);
   u8g2_InitDisplay(&u8g2);
   u8g2_SetPowerSave(&u8g2, 0);
 
@@ -280,7 +310,6 @@ int main(void)
   HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
 
   readFlash();
-
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
@@ -317,6 +346,8 @@ int main(void)
             break;
           }
         }
+        sleep_requested = 0;
+        standby_interrupt_counter = 0;
       }
 
       if (mainMenuIndex == PARAMS) {
@@ -341,22 +372,21 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
+ * @brief System Clock Configuration
+ * @retval None
+ */
+void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -365,33 +395,30 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
     Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
+                                RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
-  {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK) {
     Error_Handler();
   }
 }
 
 /**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC1_Init(void)
-{
+ * @brief ADC1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_ADC1_Init(void) {
 
   /* USER CODE BEGIN ADC1_Init 0 */
 
@@ -403,8 +430,9 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 1 */
 
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
+  /** Configure the global features of the ADC (Clock, Resolution, Data
+   * Alignment and number of conversion)
+   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -417,33 +445,30 @@ static void MX_ADC1_Init(void)
   hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
+  if (HAL_ADC_Init(&hadc1) != HAL_OK) {
     Error_Handler();
   }
 
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+  /** Configure for the selected ADC regular channel its corresponding rank in
+   * the sequencer and its sample time.
+   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
+ * @brief I2C1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_I2C1_Init(void) {
 
   /* USER CODE BEGIN I2C1_Init 0 */
 
@@ -461,23 +486,20 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.OwnAddress2 = 0;
   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM2_Init(void) {
 
   /* USER CODE BEGIN TIM2_Init 0 */
 
@@ -495,34 +517,29 @@ static void MX_TIM2_Init(void)
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK) {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-
 }
 
 /**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM3_Init(void)
-{
+ * @brief TIM3 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM3_Init(void) {
 
   /* USER CODE BEGIN TIM3_Init 0 */
 
@@ -540,34 +557,29 @@ static void MX_TIM3_Init(void)
   htim3.Init.Period = 62499;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-  {
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK) {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
-  {
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK) {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-  {
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
-
 }
 
 /**
-  * @brief TIM4 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM4_Init(void)
-{
+ * @brief TIM4 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM4_Init(void) {
 
   /* USER CODE BEGIN TIM4_Init 0 */
 
@@ -585,34 +597,29 @@ static void MX_TIM4_Init(void)
   htim4.Init.Period = 64934;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
-  {
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK) {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
-  {
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK) {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
-  {
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
-
 }
 
 /**
-  * @brief TIM11 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM11_Init(void)
-{
+ * @brief TIM11 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM11_Init(void) {
 
   /* USER CODE BEGIN TIM11_Init 0 */
 
@@ -627,23 +634,20 @@ static void MX_TIM11_Init(void)
   htim11.Init.Period = IT_DEBOUNCE_US - 1;
   htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
-  {
+  if (HAL_TIM_Base_Init(&htim11) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM11_Init 2 */
 
   /* USER CODE END TIM11_Init 2 */
-
 }
 
 /**
-  * @brief USB_OTG_FS Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USB_OTG_FS_PCD_Init(void)
-{
+ * @brief USB_OTG_FS Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USB_OTG_FS_PCD_Init(void) {
 
   /* USER CODE BEGIN USB_OTG_FS_Init 0 */
 
@@ -662,23 +666,20 @@ static void MX_USB_OTG_FS_PCD_Init(void)
   hpcd_USB_OTG_FS.Init.lpm_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.vbus_sensing_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
-  if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
-  {
+  if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN USB_OTG_FS_Init 2 */
 
   /* USER CODE END USB_OTG_FS_Init 2 */
-
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_GPIO_Init(void) {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
@@ -691,16 +692,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, ERR_LED_Pin|INF_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, ERR_LED_Pin | INF_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : BTN_LEFT_Pin BTN_CENTER_Pin */
-  GPIO_InitStruct.Pin = BTN_LEFT_Pin|BTN_CENTER_Pin;
+  GPIO_InitStruct.Pin = BTN_LEFT_Pin | BTN_CENTER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN_DOWN_Pin BTN_RIGHT_Pin */
-  GPIO_InitStruct.Pin = BTN_DOWN_Pin|BTN_RIGHT_Pin;
+  GPIO_InitStruct.Pin = BTN_DOWN_Pin | BTN_RIGHT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -712,7 +713,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(BTN_UP_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ERR_LED_Pin INF_LED_Pin */
-  GPIO_InitStruct.Pin = ERR_LED_Pin|INF_LED_Pin;
+  GPIO_InitStruct.Pin = ERR_LED_Pin | INF_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -738,11 +739,10 @@ static void MX_GPIO_Init(void)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
+void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
@@ -752,17 +752,17 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* User can add his own implementation to report the file name and line
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
+     line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

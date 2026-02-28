@@ -1,87 +1,97 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "display.h"
+#include "main.h"
+#include "measure.h"
 #include "usb.h"
 #include "usbd.h"
-#include "main.h"
-#include "display.h"
-#include "measure.h"
 
 #include <math.h>
 
 #include "../../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
 
 uint32_t readADC() {
-    uint32_t adc_val = 0;
-    HAL_ADC_Start(&hadc1);
-    if (HAL_ADC_PollForConversion(&hadc1, 10) != HAL_TIMEOUT) {
-        adc_val = HAL_ADC_GetValue(&hadc1);
-    }
-    HAL_ADC_Stop(&hadc1);
+  uint32_t adc_val = 0;
+  HAL_ADC_Start(&hadc1);
+  if (HAL_ADC_PollForConversion(&hadc1, 10) != HAL_TIMEOUT) {
+    adc_val = HAL_ADC_GetValue(&hadc1);
+  }
+  HAL_ADC_Stop(&hadc1);
 
-    return adc_val;
+  return adc_val;
 }
 
 uint32_t readAveragedADC() {
-    uint32_t adc_val = 0;
-    for (int i = 0; i < num_cycles; i++) {
-        adc_val += readADC();
-    }
-    return adc_val / num_cycles;
+  uint32_t adc_val = 0;
+  for (int i = 0; i < num_cycles; i++) {
+    adc_val += readADC();
+  }
+  return adc_val / num_cycles;
 }
 
+/**
+ * @brief Sends a HID event, measures latency in microseconds until ADC value changes beyond threshold.
+ * @param latencies_us Array to store the measured latencies in microseconds.
+ */
 void measure(uint32_t latencies_us[]) {
-    const uint32_t baseline = readADC();
+  const uint32_t baseline = readADC();
 
-    drawMeasurement(baseline, -1, -1);
+  drawMeasurement(baseline, -1, -1);
 
-    const uint32_t start = startMouseAction();
+  const uint32_t start = startMouseAction();
 
-    while (1) {
-        tud_task();
+  while (1) {
+    tud_task();
 
-        const int32_t delta = readADC() - baseline;
+    const int32_t delta = readADC() - baseline;
 
-        if (abs(delta) > sensor_threshold) {
-            uint32_t latency = (uint32_t)__HAL_TIM_GET_COUNTER(&htim2) - start;
-            stopMouseAction();
+    if (abs(delta) > sensor_threshold) {
+      uint32_t latency = (uint32_t)__HAL_TIM_GET_COUNTER(&htim2) - start;
+      stopMouseAction();
 
-            if (cycle_index < num_cycles) {
-                latencies_us[cycle_index] = latency;
-            }
+      if (cycle_index < num_cycles) {
+        latencies_us[cycle_index] = latency;
+      }
 
-            drawMeasurement(baseline, baseline + delta, latency);
+      drawMeasurement(baseline, baseline + delta, latency);
 
-            HAL_Delay(MEASUREMENT_DELAY);
+      HAL_Delay(MEASUREMENT_DELAY);
 
-            break;
-        }
+      break;
     }
+  }
 }
 
+/**
+ * @brief Calculates the mean and standard deviation of latency measurements and converts them to milliseconds.
+ * @param latencies_us Array containing latency measurements in microseconds.
+ * @param mean_ms Pointer to a float where the mean latency in milliseconds will be stored.
+ * @param sd_ms Pointer to a float where the standard deviation in milliseconds will be stored.
+ */
 void computeStatsMs(uint32_t latencies_us[], float *mean_ms, float *sd_ms) {
-    float sum_us = 0.0f;
-    float variance_us = 0.0f;
+  float sum_us = 0.0f;
+  float variance_us = 0.0f;
 
-    if (num_cycles == 1) {
-        *mean_ms = latencies_us[0] / MS_FACTOR;
-        *sd_ms = 0.0f;
-        return;
-    }
+  if (num_cycles == 1) {
+    *mean_ms = latencies_us[0] / MS_FACTOR;
+    *sd_ms = 0.0f;
+    return;
+  }
 
-    // calculate mean
-    for (int i = 0; i < num_cycles; i++) {
-        sum_us += (float)latencies_us[i];
-    }
-    const float mean_us = sum_us / (float) num_cycles;
+  // calculate mean
+  for (int i = 0; i < num_cycles; i++) {
+    sum_us += (float)latencies_us[i];
+  }
+  const float mean_us = sum_us / (float)num_cycles;
 
-    // calculate sample standard deviation
-    for (int i = 0; i < num_cycles; i++) {
-        const float diff_us = (float)latencies_us[i] - mean_us;
-        variance_us += diff_us * diff_us;
-    }
-    const float sd_us = sqrtf(variance_us / (num_cycles - 1));
+  // calculate sample standard deviation
+  for (int i = 0; i < num_cycles; i++) {
+    const float diff_us = (float)latencies_us[i] - mean_us;
+    variance_us += diff_us * diff_us;
+  }
+  const float sd_us = sqrtf(variance_us / (num_cycles - 1));
 
-    *mean_ms = mean_us / MS_FACTOR;
-    *sd_ms = sd_us / MS_FACTOR;
+  *mean_ms = mean_us / MS_FACTOR;
+  *sd_ms = sd_us / MS_FACTOR;
 }
