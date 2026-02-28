@@ -39,7 +39,12 @@ void measure(uint32_t latencies_us[]) {
 
   drawMeasurement(baseline, -1, -1);
 
-  const uint32_t start = startMouseAction();
+  __HAL_TIM_SET_COUNTER(&htim2, 0);
+  HAL_TIM_Base_Start_IT(&htim2);
+
+  const uint32_t start = TIM2->CNT;
+  HAL_GPIO_WritePin(EXT_LED_GPIO_Port, EXT_LED_Pin, GPIO_PIN_SET);
+
 
   while (1) {
     tud_task();
@@ -48,7 +53,8 @@ void measure(uint32_t latencies_us[]) {
 
     if (abs(delta) > sensor_threshold) {
       uint32_t latency = (uint32_t)__HAL_TIM_GET_COUNTER(&htim2) - start;
-      stopMouseAction();
+      HAL_GPIO_WritePin(EXT_LED_GPIO_Port, EXT_LED_Pin, GPIO_PIN_RESET);
+      // stopMouseAction();
 
       if (cycle_index < num_cycles) {
         latencies_us[cycle_index] = latency;

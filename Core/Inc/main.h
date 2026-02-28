@@ -70,6 +70,8 @@ extern u8g2_t u8g2;
 
 /* Private defines -----------------------------------------------------------*/
 #define IT_DEBOUNCE_US 20000
+#define EXT_LED_Pin GPIO_PIN_4
+#define EXT_LED_GPIO_Port GPIOA
 #define BTN_LEFT_Pin GPIO_PIN_6
 #define BTN_LEFT_GPIO_Port GPIOA
 #define BTN_LEFT_EXTI_IRQn EXTI9_5_IRQn
