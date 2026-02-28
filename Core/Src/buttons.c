@@ -64,10 +64,12 @@ void pollValueButtons() {
       if (adc_channel == 4) {
         adc_channel = 1;
         HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        updateADCChannel();
         return;
       } else if (adc_channel == 1) {
         adc_channel = 4;
         HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        updateADCChannel();
         return;
       }
     }
@@ -86,10 +88,12 @@ void pollValueButtons() {
       if (adc_channel == 4) {
         adc_channel = 1;
         HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        updateADCChannel();
         return;
       } else if (adc_channel == 1) {
         adc_channel = 4;
         HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
+        updateADCChannel();
         return;
       }
     }

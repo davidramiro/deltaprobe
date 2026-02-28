@@ -2,6 +2,7 @@
 #include "display_assets.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "main.h"
 
@@ -89,14 +90,16 @@ void drawParamsMenu(uint8_t index) {
   char value_buf[12];
   u8g2_SetFont(&u8g2, DP_FONT_SMALL);
   snprintf(value_buf, sizeof(value_buf), "%d", (int)num_cycles);
-  u8g2_DrawStr(&u8g2, 99, 14, value_buf);
+  int str_width = u8g2_GetStrWidth(&u8g2, value_buf);
+  u8g2_DrawStr(&u8g2,  110 - str_width / 2, 14, value_buf);
   snprintf(value_buf, sizeof(value_buf), "%d", (int)sensor_threshold);
-  u8g2_DrawStr(&u8g2, 99, 14 + 24, value_buf);
+  str_width = u8g2_GetStrWidth(&u8g2, value_buf);
+  u8g2_DrawStr(&u8g2, 110 - str_width / 2, 14 + 24, value_buf);
 
   if (adc_channel == 1) {
-    u8g2_DrawStr(&u8g2, 99, 14 + 48, "INT");
+    u8g2_DrawStr(&u8g2, 101, 14 + 48, "INT");
   } else if (adc_channel == 4) {
-    u8g2_DrawStr(&u8g2, 99, 14 + 48, "EXT");
+    u8g2_DrawStr(&u8g2, 101, 14 + 48, "EXT");
   }
 
   if (index != 3) {
@@ -109,7 +112,7 @@ void drawParamsMenu(uint8_t index) {
   u8g2_DrawXBMP(&u8g2, 3, 3 + 48, 15, 16, sensor_bitmap);
   u8g2_DrawXBMP(&u8g2, 3, 3 + 72, 15, 14, exit_bitmap);
 
-  u8g2_DrawStr(&u8g2, 42, 14, " CYCLES ");
+  u8g2_DrawStr(&u8g2, 42, 14, "CYCLES");
   u8g2_DrawStr(&u8g2, 33, 14 + 24, "THRESHOLD");
   u8g2_DrawStr(&u8g2, 42, 14 + 48, "SENSOR");
   u8g2_DrawStr(&u8g2, 42, 14 + 72, "SAVE & EXIT");
