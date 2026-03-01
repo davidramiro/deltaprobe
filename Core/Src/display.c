@@ -32,6 +32,10 @@ void drawStartupScreen() {
   u8g2_SendBuffer(&u8g2);
 }
 
+uint32_t map(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_min, uint32_t out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 void drawSensorBarInline(void) {
   char min_buf[6];
   char max_buf[6];
@@ -46,22 +50,8 @@ void drawSensorBarInline(void) {
   u8g2_DrawStr(&u8g2, (uint8_t)(DP_W / 2 - 12), DP_H - 18, cur_buf);
   u8g2_DrawStr(&u8g2, (uint8_t)(DP_W - 24), DP_H - 18, max_buf);
 
-  // TODO: cur_adc_val == 1 broken, full bar width
-  float bar_units;
-  if (max_adc_val == min_adc_val) {
-    bar_units = 124 / 2.0f;
-  } else {
-    bar_units = 124 / (float)(max_adc_val - min_adc_val);
-  }
-
-  float bar_w_f = (float)cur_adc_val * bar_units;
-  if (bar_w_f < 0.0f)
-    bar_w_f = 0.0f;
-  if (bar_w_f > (float)124)
-    bar_w_f = (float)124;
-
   u8g2_DrawRFrame(&u8g2, 0, 117, 128, 10, 3);
-  u8g2_DrawRBox(&u8g2, 2, 119, (uint8_t)bar_w_f, 6, 2);
+  u8g2_DrawRBox(&u8g2, 2, 119, map(cur_adc_val, min_adc_val, max_adc_val, 6, 124), 6, 2);
 }
 
 void drawMainMenuInline() {
