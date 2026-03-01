@@ -13,7 +13,7 @@ volatile uint8_t btn_center_pressed = 0;
  * and the index is less than PARAMS. Clears the button flags after processing.
  */
 void pollMainMenuButtons() {
-  if (btn_up_pressed && mainMenuIndex > CLICK) {
+  if (btn_up_pressed && mainMenuIndex > LATENCY) {
     mainMenuIndex--;
     btn_up_pressed = 0;
   }

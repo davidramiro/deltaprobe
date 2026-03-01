@@ -40,7 +40,7 @@ int8_t startMouseAction() {
 
   tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
 
-  return TIM2->CNT;
+  return 0;
 }
 
 /**

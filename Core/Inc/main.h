@@ -54,7 +54,6 @@ extern "C" {
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-void updateADCChannel();
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
@@ -65,7 +64,7 @@ extern uint8_t u8x8_byte_stm32_hw_spi(u8x8_t *u8x8, uint8_t msg,
 extern uint8_t u8x8_byte_stm32_hw_i2c(u8x8_t *u8x8, uint8_t msg,
                                       uint8_t arg_int, void *arg_ptr);
 
-extern u8g2_t u8g2;
+void updateADCChannel();
 
 /* USER CODE END EFP */
 
@@ -117,6 +116,8 @@ extern uint8_t adc_channel;
 extern uint32_t min_adc_val;
 extern uint32_t max_adc_val;
 extern uint32_t cur_adc_val;
+
+extern u8g2_t u8g2;
 
 extern volatile uint8_t btn_up_pressed;
 extern volatile uint8_t btn_down_pressed;
