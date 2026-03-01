@@ -83,15 +83,11 @@ void pollValueButtons() {
     } else if (paramMenuIndex == SENSOR) {
       if (adc_channel == 4) {
         adc_channel = 1;
-        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
-        updateADCChannel();
-        return;
       } else if (adc_channel == 1) {
         adc_channel = 4;
-        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
-        updateADCChannel();
-        return;
       }
+      updateADCChannel();
+      btn_left_pressed = 0;
     }
   }
 
@@ -107,15 +103,11 @@ void pollValueButtons() {
     } else if (paramMenuIndex == SENSOR) {
       if (adc_channel == 4) {
         adc_channel = 1;
-        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
-        updateADCChannel();
-        return;
       } else if (adc_channel == 1) {
         adc_channel = 4;
-        HAL_Delay(ADDITIONAL_DEBOUNCE_MS);
-        updateADCChannel();
-        return;
       }
+      updateADCChannel();
+      btn_right_pressed = 0;
     }
   }
 }
