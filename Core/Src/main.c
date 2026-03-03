@@ -76,9 +76,9 @@ static volatile uint8_t debounce_running = 0;
 static volatile uint8_t jiggle_interrupt_counter = 0;
 static volatile uint16_t standby_interrupt_counter = 0;
 
-enum MainMenuSelector mainMenuIndex = LATENCY;
-enum ParamMenuSelector paramMenuIndex = CYCLES;
-enum MainModeSelector mainModeIndex = CLICK;
+enum ParamsMenu main_menu_selector = LATENCY;
+enum MainMenu params_menu_selector = CYCLES;
+enum LatencyMode latency_mode_selector = CLICK;
 u8g2_t u8g2;
 
 /* USER CODE END PV */
@@ -113,7 +113,6 @@ static void MX_TIM4_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM11) {
     btn_center_pressed = btn_is_down(BTN_CENTER_GPIO_Port, BTN_CENTER_Pin);
-    ;
     btn_up_pressed = btn_is_down(BTN_UP_GPIO_Port, BTN_UP_Pin);
     btn_down_pressed = btn_is_down(BTN_DOWN_GPIO_Port, BTN_DOWN_Pin);
     btn_left_pressed = btn_is_down(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin);
@@ -179,8 +178,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
  *
  * @retval None
  */
-static void populateADCVals() {
-  cur_adc_val = readAveragedADC();
+static void populate_ADC_vals() {
+  cur_adc_val = get_3sample_average_ADC();
 
   if (cur_adc_val < min_adc_val) {
     min_adc_val = cur_adc_val;
@@ -197,7 +196,7 @@ static void populateADCVals() {
  *
  * @retval None
  */
-void updateADCChannel() {
+void update_ADC_channel() {
   HAL_ADC_Stop(&hadc1);
   ADC_ChannelConfTypeDef sConfig = {0};
 
@@ -211,7 +210,7 @@ void updateADCChannel() {
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
     HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-    drawError("HAL Error!", "Could not", "set ADC channel.");
+    draw_error_overlay("HAL Error!", "Could not", "set ADC channel.");
     HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
   }
 }
@@ -223,30 +222,30 @@ void updateADCChannel() {
  * error.
  * @retval None
  */
-static void menuRoutine() {
+static void menu_routine() {
   cur_adc_val = 0;
   min_adc_val = INT32_MAX;
   max_adc_val = 0;
   while (1) {
-    handleMCUSleep();
-    pollParamMenuButtons();
-    pollValueButtons();
+    handle_MCU_sleep();
+    poll_param_menu_buttons();
+    poll_value_buttons();
 
-    populateADCVals();
-    drawParamsMenu(paramMenuIndex);
+    populate_ADC_vals();
+    render_params_menu(params_menu_selector);
     if (btn_center_pressed) {
-      if (paramMenuIndex == EXIT) {
-        if (saveToFlash() != FLASH_OK) {
+      if (params_menu_selector == EXIT) {
+        if (save_to_flash() != FLASH_OK) {
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-          drawError("Flash error!", "Could not", "save to flash.");
+          draw_error_overlay("Flash error!", "Could not", "save to flash.");
           HAL_Delay(2000);
           HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
         }
 
-        updateADCChannel();
+        update_ADC_channel();
 
         HAL_Delay(50);
-        paramMenuIndex = 0;
+        params_menu_selector = 0;
         break;
       }
     }
@@ -259,19 +258,19 @@ static void menuRoutine() {
  * It draws a countdown screen, moves the mouse randomly after JIGGLE_INTERVAL_S
  * seconds, and exits if the center button is pressed.
  */
-static void jiggleRoutine() {
+static void jiggle_routine() {
   jiggle_interrupt_counter = 0;
   HAL_Delay(50);
 
   while (1) {
     tud_task();
-    handleDisplaySleep();
+    handle_display_sleep();
 
-    drawJigglerScreen(JIGGLE_INTERVAL_S - jiggle_interrupt_counter);
+    render_jiggler_screen(JIGGLE_INTERVAL_S - jiggle_interrupt_counter);
     if (jiggle_interrupt_counter == JIGGLE_INTERVAL_S) {
       jiggle_interrupt_counter = 0;
 
-      randomMouseMove();
+      random_mouse_move();
     }
 
     if (btn_center_pressed) {
@@ -324,7 +323,6 @@ int main(void) {
   // Init device stack on roothub port 0 for highspeed device
   tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE,
                                  .speed = TUSB_SPEED_FULL
-
   };
   tusb_init(0, &dev_init);
 
@@ -336,11 +334,11 @@ int main(void) {
   u8g2_InitDisplay(&u8g2);
   u8g2_SetPowerSave(&u8g2, 0);
 
-  drawSplashScreen();
+  render_splash_screen();
 
   // wait 2s for USB to settle and show splashscreen
   uint32_t t0 = HAL_GetTick();
-  while ((HAL_GetTick() - t0) < 1000) {
+  while (HAL_GetTick() - t0 < 1000) {
     tud_task();
     HAL_Delay(2);
   }
@@ -348,9 +346,9 @@ int main(void) {
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
 
-  readFlash();
+  read_flash();
 
-  updateADCChannel();
+  update_ADC_channel();
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
@@ -361,12 +359,12 @@ int main(void) {
   /* USER CODE BEGIN WHILE */
   while (1) {
     tud_task();
-    pollMainMenuButtons();
-    handleMCUSleep();
+    poll_main_menu_buttons();
+    handle_MCU_sleep();
 
     // wait for button press
     if (btn_center_pressed) {
-      if (mainMenuIndex == LATENCY) {
+      if (main_menu_selector == LATENCY) {
         uint32_t latencies_us[num_cycles] = {};
 
         while (cycle_index < num_cycles) {
@@ -382,8 +380,8 @@ int main(void) {
         float mean_ms = 0.0f;
         float sd_ms = 0.0f;
 
-        computeStatsMs(latencies_us, &mean_ms, &sd_ms);
-        drawAverage(latencies_us, mean_ms, sd_ms);
+        compute_latency_stats(latencies_us, &mean_ms, &sd_ms);
+        render_statistics(latencies_us, mean_ms, sd_ms);
         cycle_index = 0;
 
         while (1) {
@@ -396,17 +394,17 @@ int main(void) {
         standby_interrupt_counter = 0;
       }
 
-      if (mainMenuIndex == PARAMS) {
-        mainMenuIndex = 0;
-        menuRoutine();
+      if (main_menu_selector == PARAMS) {
+        main_menu_selector = 0;
+        menu_routine();
       }
 
-      if (mainMenuIndex == JIGGLER) {
-        jiggleRoutine();
+      if (main_menu_selector == JIGGLER) {
+        jiggle_routine();
       }
     }
 
-    drawStartupScreen();
+    render_startup_screen();
 
     HAL_Delay(10);
 

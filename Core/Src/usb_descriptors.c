@@ -145,9 +145,9 @@ static inline size_t board_usb_get_serial(uint16_t *buffer, size_t max_chars) {
 
   // Convert 12 bytes (96 bits) to hex string (24 chars)
   for (int i = 0; i < 3 && count < max_chars; i++) {
-    uint32_t word = uid[i];
+    const uint32_t word = uid[i];
     for (int j = 0; j < 8 && count < max_chars; j++) {
-      uint8_t nibble = (word >> (28 - j * 4)) & 0x0F;
+      const uint8_t nibble = (word >> (28 - j * 4)) & 0x0F;
       buffer[count++] = nibble < 10 ? '0' + nibble : 'A' + (nibble - 10);
     }
   }
@@ -232,5 +232,4 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id,
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id,
                            hid_report_type_t report_type, uint8_t const *buffer,
                            uint16_t bufsize) {
-  return;
 }

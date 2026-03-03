@@ -1,4 +1,4 @@
 #pragma once
 
-void handleMCUSleep();
-void handleDisplaySleep();
+void handle_MCU_sleep();
+void handle_display_sleep();

@@ -64,7 +64,7 @@ extern uint8_t u8x8_byte_stm32_hw_spi(u8x8_t *u8x8, uint8_t msg,
 extern uint8_t u8x8_byte_stm32_hw_i2c(u8x8_t *u8x8, uint8_t msg,
                                       uint8_t arg_int, void *arg_ptr);
 
-void updateADCChannel();
+void update_ADC_channel();
 
 /* USER CODE END EFP */
 
@@ -130,13 +130,13 @@ extern volatile uint8_t sleep_requested;
 extern volatile uint8_t wakeup_requested;
 extern volatile uint8_t display_sleeping;
 
-enum ParamMenuSelector { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 };
-enum MainMenuSelector { LATENCY = 0, JIGGLER = 1, PARAMS = 2 };
-enum MainModeSelector { CLICK = 0, MOVE = 1, EXTERNAL = 2 };
+enum MainMenu { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 };
+enum ParamsMenu { LATENCY = 0, JIGGLER = 1, PARAMS = 2 };
+enum LatencyMode { CLICK = 0, MOVE = 1, EXTERNAL = 2 };
 
-extern enum MainMenuSelector mainMenuIndex;
-extern enum MainModeSelector mainModeIndex;
-extern enum ParamMenuSelector paramMenuIndex;
+extern enum ParamsMenu main_menu_selector;
+extern enum LatencyMode latency_mode_selector;
+extern enum MainMenu params_menu_selector;
 
 /* USER CODE END Private defines */
 

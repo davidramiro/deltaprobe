@@ -1,17 +1,17 @@
 #pragma once
 #include <stdint.h>
 
-extern const unsigned char logo_bitmap_64[];
+extern const unsigned char logo_bitmap[];
 
-extern const unsigned char arrow_bitmap[];
-extern const unsigned char click_bitmap[];
-extern const unsigned char move_bitmap[];
+extern const unsigned char left_arrow_bitmap[];
+extern const unsigned char crosshair_bitmap[];
+extern const unsigned char pointer_bitmap[];
 
-extern const unsigned char menu_selection_bitmap[];
-extern const unsigned char menu_selection_2x_bitmap[];
-extern const unsigned char menu_selection_sm_bitmap[];
+extern const unsigned char menu_item_bitmap[];
+extern const unsigned char menu_item_2x_bitmap[];
+extern const unsigned char menu_item_sm_bitmap[];
 extern const unsigned char cogwheel_bitmap[];
-extern const unsigned char external_bitmap[];
+extern const unsigned char bulb_bitmap[];
 extern const unsigned char warning_bitmap[];
 
 extern const unsigned char left_bitmap[];

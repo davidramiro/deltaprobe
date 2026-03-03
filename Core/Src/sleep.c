@@ -13,7 +13,7 @@ volatile uint8_t display_sleeping = 0;
  * SLEEP mode. Restores timers, resumes the system tick, and powers the display
  * upon waking.
  */
-void handleMCUSleep() {
+void handle_MCU_sleep() {
   if (sleep_requested) {
     sleep_requested = 0;
     u8g2_SetPowerSave(&u8g2, 1);
@@ -44,7 +44,7 @@ void handleMCUSleep() {
  * powered down. If a wake-up request is detected, the display is powered back
  * up and the LED is set high. Request flags are cleared after processing.
  */
-void handleDisplaySleep() {
+void handle_display_sleep() {
   if (display_sleeping) {
     HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin,
                       led_interrupt_counter % 5 == 0);

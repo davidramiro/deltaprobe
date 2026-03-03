@@ -12,34 +12,34 @@ volatile uint8_t btn_center_pressed = 0;
  * greater than CLICK. Increments the menu index if the down button is pressed
  * and the index is less than PARAMS. Clears the button flags after processing.
  */
-void pollMainMenuButtons() {
-  if (btn_up_pressed && mainMenuIndex > LATENCY) {
-    mainMenuIndex--;
+void poll_main_menu_buttons() {
+  if (btn_up_pressed && main_menu_selector > LATENCY) {
+    main_menu_selector--;
     btn_up_pressed = 0;
   }
 
-  if (btn_down_pressed && mainMenuIndex < PARAMS) {
-    mainMenuIndex++;
+  if (btn_down_pressed && main_menu_selector < PARAMS) {
+    main_menu_selector++;
     btn_down_pressed = 0;
   }
 
-  if (btn_left_pressed && mainMenuIndex == LATENCY) {
-    if (mainModeIndex == CLICK) {
-      mainModeIndex = EXTERNAL;
+  if (btn_left_pressed && main_menu_selector == LATENCY) {
+    if (latency_mode_selector == CLICK) {
+      latency_mode_selector = EXTERNAL;
       btn_left_pressed = 0;
       return;
     }
-    mainModeIndex--;
+    latency_mode_selector--;
     btn_left_pressed = 0;
   }
 
-  if (btn_right_pressed && mainMenuIndex == LATENCY) {
-    if (mainModeIndex == EXTERNAL) {
-      mainModeIndex = CLICK;
+  if (btn_right_pressed && main_menu_selector == LATENCY) {
+    if (latency_mode_selector == EXTERNAL) {
+      latency_mode_selector = CLICK;
       btn_right_pressed = 0;
       return;
     }
-    mainModeIndex++;
+    latency_mode_selector++;
     btn_right_pressed = 0;
   }
 }
@@ -51,13 +51,13 @@ void pollMainMenuButtons() {
  * pressed and the index is less than EXIT. Clears the button flags after
  * processing.
  */
-void pollParamMenuButtons() {
-  if (btn_up_pressed && paramMenuIndex > CYCLES) {
-    paramMenuIndex--;
+void poll_param_menu_buttons() {
+  if (btn_up_pressed && params_menu_selector > CYCLES) {
+    params_menu_selector--;
     btn_up_pressed = 0;
   }
-  if (btn_down_pressed && paramMenuIndex < EXIT) {
-    paramMenuIndex++;
+  if (btn_down_pressed && params_menu_selector < EXIT) {
+    params_menu_selector++;
     btn_down_pressed = 0;
   }
 }
@@ -70,43 +70,43 @@ void pollParamMenuButtons() {
  * For the THRESHOLD option, it adjusts the sensor threshold value.
  * Handles boundary wrapping for the threshold (0 and 4096).
  */
-void pollValueButtons() {
+void poll_value_buttons() {
   if (btn_left_pressed) {
-    if (paramMenuIndex == CYCLES) {
+    if (params_menu_selector == CYCLES) {
       num_cycles--;
-    } else if (paramMenuIndex == THRESHOLD) {
+    } else if (params_menu_selector == THRESHOLD) {
       if (sensor_threshold == 0) {
         sensor_threshold = 4096;
         return;
       }
       sensor_threshold--;
-    } else if (paramMenuIndex == SENSOR) {
+    } else if (params_menu_selector == SENSOR) {
       if (adc_channel == 4) {
         adc_channel = 1;
       } else if (adc_channel == 1) {
         adc_channel = 4;
       }
-      updateADCChannel();
+      update_ADC_channel();
       btn_left_pressed = 0;
     }
   }
 
   if (btn_right_pressed) {
-    if (paramMenuIndex == CYCLES) {
+    if (params_menu_selector == CYCLES) {
       num_cycles++;
-    } else if (paramMenuIndex == THRESHOLD) {
+    } else if (params_menu_selector == THRESHOLD) {
       if (sensor_threshold == 4096) {
         sensor_threshold = 0;
         return;
       }
       sensor_threshold++;
-    } else if (paramMenuIndex == SENSOR) {
+    } else if (params_menu_selector == SENSOR) {
       if (adc_channel == 4) {
         adc_channel = 1;
       } else if (adc_channel == 1) {
         adc_channel = 4;
       }
-      updateADCChannel();
+      update_ADC_channel();
       btn_right_pressed = 0;
     }
   }
@@ -118,6 +118,6 @@ void pollValueButtons() {
  * @param pin The pin number within the port.
  * @return 1 if the pin is low, 0 if the pin is high.
  */
-uint8_t btn_is_down(GPIO_TypeDef *port, uint16_t pin) {
-  return (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET) ? 1u : 0u;
+uint8_t btn_is_down(GPIO_TypeDef *port, const uint16_t pin) {
+  return HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET ? 1u : 0u;
 }

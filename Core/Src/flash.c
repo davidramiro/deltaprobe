@@ -3,30 +3,49 @@
 #include "display.h"
 #include "main.h"
 
+/**
+ *  @brief Computes a checksum based on the provided parameters.
+ *
+ *  This function calculates a 32-bit checksum using the input cycle count,
+ *  threshold value, and ADC channel index. XOR operations are performed
+ *  on the parameters with predefined shifts to generate the checksum.
+ *
+ *  @param cycles The number of cycles to include in the checksum calculation.
+ *  @param threshold The threshold value to include in the checksum calculation.
+ *  @param channel The ADC channel identifier to include in the checksum calculation.
+ *  @return The computed 32-bit checksum.
+ */
 uint32_t checksum(const uint8_t cycles, const uint16_t threshold,
                   const uint8_t channel) {
   uint32_t sum = 0xDEADBEEFu;
 
   sum ^= cycles;
-  sum ^= (threshold << 8);
-  sum ^= (channel << 24);
+  sum ^= threshold << 8;
+  sum ^= channel << 24;
 
   return sum;
 }
 
 /**
- *  @brief Reads configuration data from flash memory and validates it.
+ *  @brief Reads and validates configuration data from flash memory.
+ *
+ *  This function retrieves stored configuration data including the number
+ *  of cycles, threshold value, ADC channel identifier, and a checksum from
+ *  designated flash memory addresses. The checksum is calculated based on
+ *  the retrieved data and compared with the stored checksum. If the two checksums
+ *  do not match, the flash memory is updated with default or new data. Otherwise,
+ *  the retrieved data is loaded into the corresponding global variables.
  */
-void readFlash(void) {
-  uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
-  uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
-  uint32_t checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
-  uint8_t adc_channel_read = *(__IO uint32_t *)ADC_CHANNEL_MEM_ADDR;
+void read_flash(void) {
+  const uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
+  const uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
+  const uint32_t checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
+  const uint8_t adc_channel_read = *(__IO uint32_t *)ADC_CHANNEL_MEM_ADDR;
 
   if (checksum(cycles_read, threshold_read, adc_channel_read) !=
       checksum_read) {
     // checksum mismatched, values in flash outdated or never written.
-    saveToFlash();
+    save_to_flash();
   } else {
     num_cycles = cycles_read;
     sensor_threshold = threshold_read;
@@ -35,10 +54,27 @@ void readFlash(void) {
 }
 
 /**
- * @brief Saves the current configuration values to the internal flash memory.
- * @return FlashStatus Status of the save operation.
+ *  @brief Saves provided configuration data to flash memory.
+ *
+ *  This function writes key parameters, including cycle count,
+ *  threshold value, ADC channel, and their checksum, to predefined
+ *  flash memory addresses. Before writing, it verifies if the data
+ *  in memory matches the current parameters to avoid unnecessary writes.
+ *  The function performs multiple stages, including unlocking the
+ *  flash memory, erasing the target sector, and writing the data with
+ *  validation. Errors during any phase are reported via specific
+ *  return codes.
+ *
+ *  @return FLASH_OK on successful write operation and verification.
+ *  @return FLASH_ERROR_UNLOCK if unlocking flash memory fails.
+ *  @return FLASH_ERROR_ERASE if sector erasure fails.
+ *  @return FLASH_ERROR_PROGRAM_CYCLES if writing the cycle count fails.
+ *  @return FLASH_ERROR_PROGRAM_THRESHOLD if writing the threshold fails.
+ *  @return FLASH_ERROR_PROGRAM_SENSOR if writing the ADC channel fails.
+ *  @return FLASH_ERROR_PROGRAM_CHECKSUM if writing the checksum fails.
+ *  @return FLASH_ERROR_VERIFY if verification of the written data fails.
  */
-FlashStatus saveToFlash(void) {
+FlashStatus save_to_flash(void) {
   uint8_t cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
   uint16_t threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
   uint32_t checksum_read = *(__IO uint32_t *)CHECKSUM_MEM_ADDR;
@@ -53,17 +89,15 @@ FlashStatus saveToFlash(void) {
 
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
 
-  drawFlashScreen(1);
+  render_flash_screen(1);
 
-  HAL_StatusTypeDef status;
-
-  status = HAL_FLASH_Unlock();
+  HAL_StatusTypeDef status = HAL_FLASH_Unlock();
   if (status != HAL_OK) {
     HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
     return FLASH_ERROR_UNLOCK;
   }
 
-  drawFlashScreen(2);
+  render_flash_screen(2);
 
   FLASH_EraseInitTypeDef eraseInit;
   eraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
@@ -79,7 +113,7 @@ FlashStatus saveToFlash(void) {
     return FLASH_ERROR_ERASE;
   }
 
-  drawFlashScreen(3);
+  render_flash_screen(3);
 
   status =
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, CYCLES_MEM_ADDR, num_cycles);
@@ -89,7 +123,7 @@ FlashStatus saveToFlash(void) {
     return FLASH_ERROR_PROGRAM_CYCLES;
   }
 
-  drawFlashScreen(4);
+  render_flash_screen(4);
 
   status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, THRESHOLD_MEM_ADDR,
                              sensor_threshold);
@@ -99,7 +133,7 @@ FlashStatus saveToFlash(void) {
     return FLASH_ERROR_PROGRAM_THRESHOLD;
   }
 
-  drawFlashScreen(5);
+  render_flash_screen(5);
 
   status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, ADC_CHANNEL_MEM_ADDR,
                              adc_channel);
@@ -108,7 +142,7 @@ FlashStatus saveToFlash(void) {
     return FLASH_ERROR_PROGRAM_SENSOR;
   }
 
-  drawFlashScreen(6);
+  render_flash_screen(6);
 
   status =
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, CHECKSUM_MEM_ADDR,
@@ -120,7 +154,7 @@ FlashStatus saveToFlash(void) {
 
   HAL_FLASH_Lock();
 
-  drawFlashScreen(7);
+  render_flash_screen(7);
 
   cycles_read = *(__IO uint32_t *)CYCLES_MEM_ADDR;
   threshold_read = *(__IO uint32_t *)THRESHOLD_MEM_ADDR;
@@ -136,14 +170,4 @@ FlashStatus saveToFlash(void) {
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
 
   return FLASH_OK;
-}
-
-/**
- * @brief Packs the 8-bit and 16-bit values into a single 32-bit integer.
- * @param val8 The 8-bit value to be placed in the lower bits.
- * @param val16 The 16-bit value to be placed in the upper bits.
- * @return The resulting 32-bit packed integer
- */
-uint32_t packedChecksum(const uint8_t val8, const uint16_t val16) {
-  return val16 << 8 | val8;
 }

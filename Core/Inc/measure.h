@@ -4,7 +4,7 @@
 #define MS_FACTOR 1000.0f
 #define MEASUREMENT_DELAY 503
 
-uint32_t readADC();
-uint32_t readAveragedADC();
+uint32_t read_single_ADC();
+uint32_t get_3sample_average_ADC();
 int8_t measure(uint32_t latencies_us[]);
-void computeStatsMs(uint32_t latencies_us[], float *mean_ms, float *sd_ms);
+void compute_latency_stats(const uint32_t latencies_us[], float *mean_ms, float *sd_ms);

@@ -11,7 +11,7 @@
 
 #include "../../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
 
-uint32_t readADC() {
+uint32_t read_single_ADC() {
   uint32_t adc_val = 0;
   HAL_ADC_Start(&hadc1);
   if (HAL_ADC_PollForConversion(&hadc1, 10) != HAL_TIMEOUT) {
@@ -22,10 +22,10 @@ uint32_t readADC() {
   return adc_val;
 }
 
-uint32_t readAveragedADC() {
+uint32_t get_3sample_average_ADC() {
   uint32_t adc_val = 0;
   for (int i = 0; i < 3; i++) {
-    adc_val += readADC();
+    adc_val += read_single_ADC();
   }
   return adc_val / 3;
 }
@@ -37,18 +37,18 @@ uint32_t readAveragedADC() {
  * @return int8_t Error code
  */
 int8_t measure(uint32_t latencies_us[]) {
-  const uint32_t baseline = readADC();
+  const uint32_t baseline = read_single_ADC();
   
-  drawMeasurement(baseline, -1, -1);
+  render_measurement(baseline, -1, -1);
 
   HAL_TIM_Base_Stop_IT(&htim2);
   __HAL_TIM_SET_COUNTER(&htim2, 0);
   HAL_TIM_Base_Start_IT(&htim2);
 
-  if (mainModeIndex == EXTERNAL) {
+  if (latency_mode_selector == EXTERNAL) {
     HAL_GPIO_WritePin(EXT_TRIGGER_GPIO_Port, EXT_TRIGGER_Pin, GPIO_PIN_SET);
   } else {
-    int8_t error = startMouseAction();
+    const int8_t error = start_mouse_action();
     if (error) {
       return error;
     }
@@ -59,15 +59,15 @@ int8_t measure(uint32_t latencies_us[]) {
   while (1) {
     tud_task();
 
-    const int32_t delta = readADC() - baseline;
+    const int32_t delta = read_single_ADC() - baseline;
 
     if (abs(delta) > sensor_threshold) {
-      uint32_t latency = (uint32_t)__HAL_TIM_GET_COUNTER(&htim2) - start;
-      if (mainModeIndex == EXTERNAL) {
+      const uint32_t latency = (uint32_t)__HAL_TIM_GET_COUNTER(&htim2) - start;
+      if (latency_mode_selector == EXTERNAL) {
         HAL_GPIO_WritePin(EXT_TRIGGER_GPIO_Port, EXT_TRIGGER_Pin,
                           GPIO_PIN_RESET);
       } else {
-        int8_t error = stopMouseAction();
+        const int8_t error = stop_mouse_action();
         if (error) {
           return error;
         }
@@ -77,7 +77,7 @@ int8_t measure(uint32_t latencies_us[]) {
         latencies_us[cycle_index] = latency;
       }
 
-      drawMeasurement(baseline, baseline + delta, latency);
+      render_measurement(baseline, baseline + delta, latency);
 
       HAL_Delay(MEASUREMENT_DELAY);
 
@@ -97,7 +97,7 @@ int8_t measure(uint32_t latencies_us[]) {
  * @param sd_ms Pointer to a float where the standard deviation in milliseconds
  * will be stored.
  */
-void computeStatsMs(uint32_t latencies_us[], float *mean_ms, float *sd_ms) {
+void compute_latency_stats(const uint32_t latencies_us[], float *mean_ms, float *sd_ms) {
   float sum_us = 0.0f;
   float variance_us = 0.0f;
 
@@ -118,7 +118,7 @@ void computeStatsMs(uint32_t latencies_us[], float *mean_ms, float *sd_ms) {
     const float diff_us = (float)latencies_us[i] - mean_us;
     variance_us += diff_us * diff_us;
   }
-  const float sd_us = sqrtf(variance_us / (num_cycles - 1));
+  const float sd_us = sqrtf(variance_us / (float)(num_cycles - 1));
 
   *mean_ms = mean_us / MS_FACTOR;
   *sd_ms = sd_us / MS_FACTOR;

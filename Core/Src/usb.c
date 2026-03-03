@@ -20,22 +20,22 @@
  * a message.
  * @return int8_t Error code
  */
-int8_t startMouseAction() {
+int8_t start_mouse_action() {
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
 
   while (!tud_hid_ready()) {
     tud_task();
     if (TIM2->CNT > 6000000) {
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-      drawError("USB timeout", "Check USB", "connection");
+      draw_error_overlay("USB timeout", "Check USB", "connection");
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
       return 1;
     }
   }
 
-  tud_hid_mouse_report(REPORT_ID_MOUSE, mainModeIndex == CLICK,
-                       mainModeIndex == MOVE ? 127 : 0,
-                       mainModeIndex == MOVE ? 127 : 0, 0, 0);
+  tud_hid_mouse_report(REPORT_ID_MOUSE, latency_mode_selector == CLICK,
+                       latency_mode_selector == MOVE ? 127 : 0,
+                       latency_mode_selector == MOVE ? 127 : 0, 0, 0);
   return 0;
 }
 
@@ -48,7 +48,7 @@ int8_t startMouseAction() {
  * error LED, displaying a message, and delaying before returning. Upon
  * successful transmission, it flashes the info LED to indicate completion.
  */
-void randomMouseMove() {
+void random_mouse_move() {
   HAL_TIM_Base_Stop_IT(&htim2);
   __HAL_TIM_SET_COUNTER(&htim2, 0);
   HAL_TIM_Base_Start_IT(&htim2);
@@ -57,13 +57,13 @@ void randomMouseMove() {
     tud_task();
     if (TIM2->CNT > 6000000) {
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-      drawError("USB timeout", "Check USB", "connection");
+      draw_error_overlay("USB timeout", "Check USB", "connection");
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
       return;
     }
   }
 
-  tud_hid_mouse_report(REPORT_ID_MOUSE, 0, (rand() % 7) - 3, (rand() % 7) - 3,
+  tud_hid_mouse_report(REPORT_ID_MOUSE, 0, rand() % 7 - 3, rand() % 7 - 3,
                        0, 0);
 
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
@@ -82,7 +82,7 @@ void randomMouseMove() {
  * sends the report.
  * @return int8_t Error code
  */
-int8_t stopMouseAction() {
+int8_t stop_mouse_action() {
   HAL_TIM_Base_Stop_IT(&htim2);
   __HAL_TIM_SET_COUNTER(&htim2, 0);
   HAL_TIM_Base_Start_IT(&htim2);
@@ -90,15 +90,15 @@ int8_t stopMouseAction() {
     tud_task();
     if (TIM2->CNT > 6000000) {
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-      drawError("USB timeout", "Check USB", "connection");
+      draw_error_overlay("USB timeout", "Check USB", "connection");
       HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
       return 1;
     }
   }
 
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
-  tud_hid_mouse_report(REPORT_ID_MOUSE, 0, mainModeIndex == MOVE ? -127 : 0,
-                       mainModeIndex == MOVE ? -127 : 0, 0, 0);
+  tud_hid_mouse_report(REPORT_ID_MOUSE, 0, latency_mode_selector == MOVE ? -127 : 0,
+                       latency_mode_selector == MOVE ? -127 : 0, 0, 0);
 
   return 0;
 }

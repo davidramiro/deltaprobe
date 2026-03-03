@@ -17,6 +17,6 @@ typedef enum {
   FLASH_ERROR_VERIFY
 } FlashStatus;
 
-FlashStatus saveToFlash(void);
-void readFlash(void);
+FlashStatus save_to_flash(void);
+void read_flash(void);
 uint32_t checksum(uint8_t cycles, uint16_t threshold, uint8_t channel);
