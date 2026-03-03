@@ -207,12 +207,22 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id,
                                hid_report_type_t report_type, uint8_t *buffer,
                                uint16_t reqlen) {
-  // TODO not Implemented
-  (void)instance;
-  (void)report_id;
-  (void)report_type;
-  (void)buffer;
-  (void)reqlen;
+  if (report_type == HID_REPORT_TYPE_FEATURE) {
+    switch (report_id) {
+      case 1:
+        if (reqlen >= 1) {
+          buffer[0] = 0x01;
+          return 1;
+        }
+        break;
+      case 2:
+        if (reqlen >= 1) {
+          buffer[0] = 0x01;
+          return 1;
+        }
+        break;
+    }
+  }
 
   return 0;
 }

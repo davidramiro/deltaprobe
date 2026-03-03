@@ -32,7 +32,8 @@ void drawStartupScreen() {
   u8g2_SendBuffer(&u8g2);
 }
 
-uint32_t map(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_min, uint32_t out_max) {
+uint32_t map(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_min,
+             uint32_t out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
@@ -51,7 +52,8 @@ void drawSensorBarInline(void) {
   u8g2_DrawStr(&u8g2, (uint8_t)(DP_W - 24), DP_H - 18, max_buf);
 
   u8g2_DrawRFrame(&u8g2, 0, 117, 128, 10, 3);
-  u8g2_DrawRBox(&u8g2, 2, 119, map(cur_adc_val, min_adc_val, max_adc_val, 6, 124), 6, 2);
+  u8g2_DrawRBox(&u8g2, 2, 119,
+                map(cur_adc_val, min_adc_val, max_adc_val, 6, 124), 6, 2);
 }
 
 void drawMainMenuInline() {
@@ -208,16 +210,14 @@ void drawGraphInline(uint32_t latencies_us[], float mean_ms) {
 
   u8g2_SetFont(&u8g2, DP_FONT_XSMALL);
   char max_buf[8];
-  snprintf(max_buf, sizeof(max_buf), "%d", max);
+  snprintf(max_buf, sizeof(max_buf), "%lu", max);
   u8g2_DrawStr(&u8g2, 18 - u8g2_GetStrWidth(&u8g2, max_buf), 59, max_buf);
   char min_buf[8];
-  snprintf(min_buf, sizeof(min_buf), "%d", min);
+  snprintf(min_buf, sizeof(min_buf), "%lu", min);
   u8g2_DrawStr(&u8g2, 18 - u8g2_GetStrWidth(&u8g2, min_buf), 110, min_buf);
   char med_buf[8];
-  snprintf(med_buf, sizeof(med_buf), "%d", (max + min) / 2);
+  snprintf(med_buf, sizeof(med_buf), "%lu", (max + min) / 2);
   u8g2_DrawStr(&u8g2, 18 - u8g2_GetStrWidth(&u8g2, med_buf), 84, med_buf);
-
-
 
   const uint32_t range = max - min;
 
@@ -262,7 +262,6 @@ void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms) {
 
   u8g2_DrawLine(&u8g2, 6, 18, 120, 18);
 
-
   u8g2_SetFont(&u8g2, DP_FONT_SMALL);
   u8g2_DrawStr(&u8g2, 6, 28, "JITTER");
   u8g2_DrawStr(&u8g2, 6, 38, "MIN");
@@ -270,12 +269,15 @@ void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms) {
 
   char jitter_buf[16];
   snprintf(jitter_buf, sizeof(jitter_buf), "%.3f ms", sd_ms);
-  u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, jitter_buf), 28, jitter_buf);
+  u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, jitter_buf), 28,
+               jitter_buf);
   char min_buf[16];
-  snprintf(min_buf, sizeof(min_buf), "%.3f ms", (float) getMin(latencies_us) / 1000.0f);
+  snprintf(min_buf, sizeof(min_buf), "%.3f ms",
+           (float)getMin(latencies_us) / 1000.0f);
   u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, min_buf), 38, min_buf);
   char max_buf[16];
-  snprintf(max_buf, sizeof(max_buf), "%.3f ms", (float) getMax(latencies_us) / 1000.0f);
+  snprintf(max_buf, sizeof(max_buf), "%.3f ms",
+           (float)getMax(latencies_us) / 1000.0f);
   u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, max_buf), 48, max_buf);
 
   drawGraphInline(latencies_us, mean_ms);

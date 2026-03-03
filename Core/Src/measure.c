@@ -38,7 +38,7 @@ uint32_t readAveragedADC() {
  */
 int8_t measure(uint32_t latencies_us[]) {
   const uint32_t baseline = readADC();
-
+  
   drawMeasurement(baseline, -1, -1);
 
   HAL_TIM_Base_Stop_IT(&htim2);

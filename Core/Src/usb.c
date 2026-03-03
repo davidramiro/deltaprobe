@@ -11,7 +11,8 @@
 #include "usbd.h"
 
 /**
- * @brief Triggers a mouse action based on the current menu index.
+ * @brief Triggers a mouse action based on the current menu index. Needs TIM2 to
+ * be reset & started.
  * @details To be used as the first action within a latency measurement.
  * Depending on `mainMenuIndex`, either clicks mouse1 or moves by 127px x, 127px
  * y. It waits for the USB HID interface to be ready. If a timeout occurs (6
@@ -20,13 +21,7 @@
  * @return int8_t Error code
  */
 int8_t startMouseAction() {
-  hid_mouse_report_t report = {.wheel = 0, .pan = 0};
-
-  if (mainModeIndex == CLICK) {
-    report.buttons = 1;
-  } else if (mainModeIndex == MOVE) {
-    report.x = 127, report.y = 127;
-  }
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
 
   while (!tud_hid_ready()) {
     tud_task();
@@ -38,8 +33,9 @@ int8_t startMouseAction() {
     }
   }
 
-  tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
-
+  tud_hid_mouse_report(REPORT_ID_MOUSE, mainModeIndex == CLICK,
+                       mainModeIndex == MOVE ? 127 : 0,
+                       mainModeIndex == MOVE ? 127 : 0, 0, 0);
   return 0;
 }
 
@@ -53,12 +49,9 @@ int8_t startMouseAction() {
  * successful transmission, it flashes the info LED to indicate completion.
  */
 void randomMouseMove() {
-  hid_mouse_report_t report = {
-      .wheel = 0,
-      .pan = 0,
-      .x = (rand() % 7) - 3,
-      .y = (rand() % 7) - 3,
-  };
+  HAL_TIM_Base_Stop_IT(&htim2);
+  __HAL_TIM_SET_COUNTER(&htim2, 0);
+  HAL_TIM_Base_Start_IT(&htim2);
 
   while (!tud_hid_ready()) {
     tud_task();
@@ -70,7 +63,8 @@ void randomMouseMove() {
     }
   }
 
-  tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
+  tud_hid_mouse_report(REPORT_ID_MOUSE, 0, (rand() % 7) - 3, (rand() % 7) - 3,
+                       0, 0);
 
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
   HAL_Delay(50);
@@ -78,7 +72,7 @@ void randomMouseMove() {
 }
 
 /**
- * @brief Resets mouse state by sending HID input
+ * @brief Resets mouse state by sending HID input.
  *
  * @details To be used after measurement with @ref startMouseAction is finished.
  * Depending on `mainMenuIndex`, sets `buttons` to 0 for a releasing or `x` and
@@ -89,14 +83,9 @@ void randomMouseMove() {
  * @return int8_t Error code
  */
 int8_t stopMouseAction() {
-  hid_mouse_report_t report = {.wheel = 0, .pan = 0};
-
-  if (mainModeIndex == CLICK) {
-    report.buttons = 0;
-  } else if (mainModeIndex == MOVE) {
-    report.x = -127, report.y = -127;
-  }
-
+  HAL_TIM_Base_Stop_IT(&htim2);
+  __HAL_TIM_SET_COUNTER(&htim2, 0);
+  HAL_TIM_Base_Start_IT(&htim2);
   while (!tud_hid_ready()) {
     tud_task();
     if (TIM2->CNT > 6000000) {
@@ -107,5 +96,9 @@ int8_t stopMouseAction() {
     }
   }
 
-  tud_hid_report(REPORT_ID_MOUSE, &report, sizeof(report));
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
+  tud_hid_mouse_report(REPORT_ID_MOUSE, 0, mainModeIndex == MOVE ? -127 : 0,
+                       mainModeIndex == MOVE ? -127 : 0, 0, 0);
+
+  return 0;
 }
