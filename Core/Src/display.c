@@ -177,9 +177,9 @@ void drawMeasurement(uint32_t baseline, uint32_t new_value, uint32_t latency) {
 }
 
 uint32_t getMin(uint32_t latencies_us[]) {
-  uint32_t min = latencies_us[0] / 1000;
+  uint32_t min = latencies_us[0];
   for (uint8_t i = 1; i < num_cycles; i++) {
-    uint32_t v = latencies_us[i] / 1000;
+    uint32_t v = latencies_us[i];
     if (v < min)
       min = v;
   }
@@ -187,40 +187,53 @@ uint32_t getMin(uint32_t latencies_us[]) {
 }
 
 uint32_t getMax(uint32_t latencies_us[]) {
-  uint32_t max = latencies_us[0] / 1000;
+  uint32_t max = latencies_us[0];
   for (uint8_t i = 1; i < num_cycles; i++) {
-    uint32_t v = latencies_us[i] / 1000;
+    uint32_t v = latencies_us[i];
     if (v > max)
       max = v;
   }
   return max;
 }
 
-void drawGraphInline(uint32_t latencies_us[]) {
-  u8g2_DrawLine(&u8g2, 4, 60, 4, 96);
-  u8g2_DrawLine(&u8g2, 2, 94, 122, 94);
-  u8g2_DrawLine(&u8g2, 4, 60, 5, 61);
-  u8g2_DrawLine(&u8g2, 122, 94, 121, 95);
-  u8g2_DrawLine(&u8g2, 4, 60, 3, 61);
-  u8g2_DrawLine(&u8g2, 122, 94, 121, 93);
+void drawGraphInline(uint32_t latencies_us[], float mean_ms) {
+  u8g2_DrawLine(&u8g2, 125, 110, 19, 110);
+  u8g2_DrawLine(&u8g2, 20, 55, 20, 111);
+  u8g2_DrawPixel(&u8g2, 19, 56);
+  u8g2_DrawPixel(&u8g2, 19, 81);
+  u8g2_DrawPixel(&u8g2, 19, 107);
 
-  const uint32_t min = getMin(latencies_us);
-  const uint32_t max = getMax(latencies_us);
+  const uint32_t min = getMin(latencies_us) / 1000;
+  const uint32_t max = getMax(latencies_us) / 1000;
+
+  u8g2_SetFont(&u8g2, DP_FONT_XSMALL);
+  char max_buf[8];
+  snprintf(max_buf, sizeof(max_buf), "%d", max);
+  u8g2_DrawStr(&u8g2, 18 - u8g2_GetStrWidth(&u8g2, max_buf), 59, max_buf);
+  char min_buf[8];
+  snprintf(min_buf, sizeof(min_buf), "%d", min);
+  u8g2_DrawStr(&u8g2, 18 - u8g2_GetStrWidth(&u8g2, min_buf), 110, min_buf);
+  char med_buf[8];
+  snprintf(med_buf, sizeof(med_buf), "%d", (max + min) / 2);
+  u8g2_DrawStr(&u8g2, 18 - u8g2_GetStrWidth(&u8g2, med_buf), 84, med_buf);
+
+
+
   const uint32_t range = max - min;
 
-  const float pixel_per_value = (range == 0) ? 0.0f : (30.0f / (float)range);
+  const float pixel_per_value = (range == 0) ? 0.0f : (51.0f / (float)range);
   const float pixel_per_cycle =
-      (num_cycles == 0) ? 0.0f : (120.0f / (float)num_cycles);
+      (num_cycles == 0) ? 0.0f : (108.0f / (float)num_cycles);
 
   uint8_t prevX = 0;
   uint8_t prevY = 0;
 
   for (uint8_t i = 0; i < num_cycles; i++) {
-    uint8_t x = (uint8_t)((i + 1) * pixel_per_cycle);
+    uint8_t x = (uint8_t)(23 + i * pixel_per_cycle);
     uint32_t v_ms = latencies_us[i] / 1000;
-    uint8_t y = (uint8_t)(93 - (int)((v_ms - min) * pixel_per_value));
+    uint8_t y = (uint8_t)(107 - (int)((v_ms - min) * pixel_per_value));
 
-    u8g2_DrawXBMP(&u8g2, x - 1, y - 1, 3, 3, graph_point_bitmap);
+    // u8g2_DrawXBMP(&u8g2, x - 1, y - 1, 3, 3, graph_point_bitmap);
 
     if (prevX != 0) {
       u8g2_DrawLine(&u8g2, prevX, prevY, x, y);
@@ -234,28 +247,45 @@ void drawGraphInline(uint32_t latencies_us[]) {
 void drawAverage(uint32_t latencies_us[], float mean_ms, float sd_ms) {
   u8g2_ClearBuffer(&u8g2);
 
-  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-  u8g2_DrawStr(&u8g2, 2, 10, "MEAN");
-  u8g2_DrawStr(&u8g2, 2, 38, "STD DEV");
-  u8g2_DrawStr(&u8g2, 114, 24, "ms");
-  u8g2_DrawStr(&u8g2, 114, 54, "ms");
+  u8g2_DrawRFrame(&u8g2, 1, 1, 126, 51, 3);
 
-  u8g2_SetFont(&u8g2, DP_FONT_LARGE);
+  u8g2_SetFont(&u8g2, DP_FONT_XSMALL);
+  u8g2_DrawStr(&u8g2, 5, 9, "AVERAGE");
+  char n_buf[8];
+  snprintf(n_buf, sizeof(n_buf), "n: %d", num_cycles);
+  u8g2_DrawStr(&u8g2, 5, 16, n_buf);
+
+  u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
   char mean_buf[16];
-  snprintf(mean_buf, sizeof(mean_buf), "%.3f", mean_ms);
-  u8g2_DrawStr(&u8g2, 52, 18, mean_buf);
+  snprintf(mean_buf, sizeof(mean_buf), "%.3f ms", mean_ms);
+  u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, mean_buf), 15, mean_buf);
 
-  char sd_buf[16];
-  snprintf(sd_buf, sizeof(sd_buf), "%.3f", sd_ms);
-  u8g2_DrawStr(&u8g2, 52, 46, sd_buf);
+  u8g2_DrawLine(&u8g2, 6, 18, 120, 18);
 
-  u8g2_DrawXBMP(&u8g2, 1, 105, 128, 21, menu_selection_bitmap);
-  u8g2_DrawXBMP(&u8g2, 8, 108, 15, 14, exit_bitmap);
 
   u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-  u8g2_DrawStr(&u8g2, 41, 120, "MAIN MENU");
+  u8g2_DrawStr(&u8g2, 6, 28, "JITTER");
+  u8g2_DrawStr(&u8g2, 6, 38, "MIN");
+  u8g2_DrawStr(&u8g2, 6, 48, "MAX");
 
-  drawGraphInline(latencies_us);
+  char jitter_buf[16];
+  snprintf(jitter_buf, sizeof(jitter_buf), "%.3f ms", sd_ms);
+  u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, jitter_buf), 28, jitter_buf);
+  char min_buf[16];
+  snprintf(min_buf, sizeof(min_buf), "%.3f ms", (float) getMin(latencies_us) / 1000.0f);
+  u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, min_buf), 38, min_buf);
+  char max_buf[16];
+  snprintf(max_buf, sizeof(max_buf), "%.3f ms", (float) getMax(latencies_us) / 1000.0f);
+  u8g2_DrawStr(&u8g2, 120 - u8g2_GetStrWidth(&u8g2, max_buf), 48, max_buf);
+
+  drawGraphInline(latencies_us, mean_ms);
+
+  u8g2_DrawXBM(&u8g2, 18, 113, 93, 14, menu_selection_sm_bitmap);
+
+  u8g2_DrawXBM(&u8g2, 32, 117, 7, 5, exit_sm_bitmap);
+
+  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
+  u8g2_DrawStr(&u8g2, 46, 123, "MAIN MENU");
 
   u8g2_SendBuffer(&u8g2);
 }

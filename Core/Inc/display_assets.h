@@ -9,6 +9,7 @@ extern const unsigned char move_bitmap[];
 
 extern const unsigned char menu_selection_bitmap[];
 extern const unsigned char menu_selection_2x_bitmap[];
+extern const unsigned char menu_selection_sm_bitmap[];
 extern const unsigned char cogwheel_bitmap[];
 extern const unsigned char external_bitmap[];
 extern const unsigned char warning_bitmap[];
@@ -20,6 +21,7 @@ extern const unsigned char sensor_bitmap[];
 extern const unsigned char cycles_bitmap[];
 extern const unsigned char threshold_bitmap[];
 extern const unsigned char exit_bitmap[];
+extern const unsigned char exit_sm_bitmap[];
 
 extern const unsigned char graph_point_bitmap[];
 

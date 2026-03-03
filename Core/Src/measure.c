@@ -24,10 +24,10 @@ uint32_t readADC() {
 
 uint32_t readAveragedADC() {
   uint32_t adc_val = 0;
-  for (int i = 0; i < num_cycles; i++) {
+  for (int i = 0; i < 3; i++) {
     adc_val += readADC();
   }
-  return adc_val / num_cycles;
+  return adc_val / 3;
 }
 
 /**
