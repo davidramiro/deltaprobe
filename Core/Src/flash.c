@@ -101,6 +101,7 @@ FlashStatus save_to_flash(void) {
 
   FLASH_EraseInitTypeDef eraseInit;
   eraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
+  // last flash sector as per RM0383. caution: probably stm32f411 specific
   eraseInit.Sector = 7;
   eraseInit.NbSectors = 1;
   eraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
@@ -135,7 +136,7 @@ FlashStatus save_to_flash(void) {
 
   render_flash_screen(5);
 
-  status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, ADC_CHANNEL_MEM_ADDR,
+  status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, ADC_CHANNEL_MEM_ADDR,
                              adc_channel);
   if (status != HAL_OK) {
     HAL_FLASH_Lock();
