@@ -125,18 +125,19 @@ extern volatile uint8_t btn_left_pressed;
 extern volatile uint8_t btn_right_pressed;
 extern volatile uint8_t btn_center_pressed;
 
+extern volatile uint16_t standby_interrupt_counter;
 extern volatile uint8_t led_interrupt_counter;
 extern volatile uint8_t sleep_requested;
 extern volatile uint8_t wakeup_requested;
 extern volatile uint8_t display_sleeping;
 
-enum MainMenu { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 };
-enum ParamsMenu { LATENCY = 0, JIGGLER = 1, PARAMS = 2 };
-enum LatencyMode { CLICK = 0, MOVE = 1, EXTERNAL = 2 };
+typedef enum { CYCLES = 0, THRESHOLD = 1, SENSOR = 2, EXIT = 3 } MainMenu;
+typedef enum { LATENCY = 0, JIGGLER = 1, PARAMS = 2 } ParamsMenu;
+typedef enum { CLICK = 0, MOVE = 1, EXTERNAL = 2 } LatencyMode;
 
-extern enum ParamsMenu main_menu_selector;
-extern enum LatencyMode latency_mode_selector;
-extern enum MainMenu params_menu_selector;
+extern ParamsMenu main_menu_selector;
+extern LatencyMode latency_mode_selector;
+extern MainMenu params_menu_selector;
 
 /* USER CODE END Private defines */
 

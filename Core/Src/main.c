@@ -74,11 +74,10 @@ uint32_t cur_adc_val;
 
 static volatile uint8_t debounce_running = 0;
 static volatile uint8_t jiggle_interrupt_counter = 0;
-static volatile uint16_t standby_interrupt_counter = 0;
 
-enum ParamsMenu main_menu_selector = LATENCY;
-enum MainMenu params_menu_selector = CYCLES;
-enum LatencyMode latency_mode_selector = CLICK;
+ParamsMenu main_menu_selector = LATENCY;
+MainMenu params_menu_selector = CYCLES;
+LatencyMode latency_mode_selector = CLICK;
 u8g2_t u8g2;
 
 /* USER CODE END PV */
