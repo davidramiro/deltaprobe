@@ -60,7 +60,7 @@ extern "C" {
 #define CFG_TUSB_DEBUG 0
 #endif
 
-#define CFG_TUSB_RHPORT0_MODE (OPT_MODE_DEVICE | OPT_MODE_HIGH_SPEED)
+#define CFG_TUSB_RHPORT0_MODE (OPT_MODE_DEVICE | OPT_MODE_FULL_SPEED)
 
 // Enable Device stack
 #define CFG_TUD_ENABLED 1
