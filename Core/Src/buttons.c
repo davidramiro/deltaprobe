@@ -68,7 +68,7 @@ void poll_param_menu_buttons() {
  * Checks the current menu index to determine which variable to modify.
  * For the CYCLES option, it increments or decrements the cycle count.
  * For the THRESHOLD option, it adjusts the sensor threshold value.
- * Handles boundary wrapping for the threshold (0 and 4096).
+ * Handles boundary wrapping for the threshold (0 and 4095).
  */
 void poll_value_buttons() {
   if (btn_left_pressed) {
@@ -76,7 +76,7 @@ void poll_value_buttons() {
       num_cycles--;
     } else if (params_menu_selector == THRESHOLD) {
       if (sensor_threshold == 0) {
-        sensor_threshold = 4096;
+        sensor_threshold = 4095;
         return;
       }
       sensor_threshold--;
@@ -95,7 +95,7 @@ void poll_value_buttons() {
     if (params_menu_selector == CYCLES) {
       num_cycles++;
     } else if (params_menu_selector == THRESHOLD) {
-      if (sensor_threshold == 4096) {
+      if (sensor_threshold == 4095) {
         sensor_threshold = 0;
         return;
       }

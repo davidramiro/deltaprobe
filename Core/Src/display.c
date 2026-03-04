@@ -34,6 +34,10 @@ void render_startup_screen() {
 
 uint32_t map(const uint32_t x, const uint32_t in_min, const uint32_t in_max, const uint32_t out_min,
              const uint32_t out_max) {
+  if (in_min == in_max) {
+    // avoid division by zero
+    return out_max;
+  }
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
