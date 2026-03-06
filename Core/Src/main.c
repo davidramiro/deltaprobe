@@ -6,12 +6,19 @@
  ******************************************************************************
  * @attention
  *
- * Copyright (c) 2026 STMicroelectronics.
+ * Copyright (c) 2026 David Justo.
  * All rights reserved.
  *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
+ * This software is not licensed for distribution, modification, or commercial
+ * use without explicit written permission from the author.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  ******************************************************************************
  */
@@ -178,11 +185,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
  * @retval None
  */
 static void populate_ADC_vals() {
-  cur_adc_val = get_3sample_average_ADC();
+  cur_adc_val = read_single_ADC();
 
   if (cur_adc_val < min_adc_val) {
     min_adc_val = cur_adc_val;
-  } else if (cur_adc_val > max_adc_val) {
+  }
+  if (cur_adc_val > max_adc_val) {
     max_adc_val = cur_adc_val;
   }
 }
@@ -321,8 +329,7 @@ int main(void) {
   /* USER CODE BEGIN 2 */
   // Init device stack on roothub port 0 for highspeed device
   tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE,
-                                 .speed = TUSB_SPEED_FULL
-  };
+                                 .speed = TUSB_SPEED_FULL};
   tusb_init(0, &dev_init);
 
   HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);

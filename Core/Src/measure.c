@@ -22,14 +22,6 @@ uint32_t read_single_ADC() {
   return adc_val;
 }
 
-uint32_t get_3sample_average_ADC() {
-  uint32_t adc_val = 0;
-  for (int i = 0; i < 3; i++) {
-    adc_val += read_single_ADC();
-  }
-  return adc_val / 3;
-}
-
 /**
  * @brief Sends a HID event, measures latency in microseconds until ADC value
  * changes beyond threshold.
