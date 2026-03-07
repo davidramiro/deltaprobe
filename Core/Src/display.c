@@ -32,8 +32,8 @@ void render_startup_screen() {
   u8g2_SendBuffer(&u8g2);
 }
 
-uint32_t map(const uint32_t x, const uint32_t in_min, const uint32_t in_max, const uint32_t out_min,
-             const uint32_t out_max) {
+uint32_t map(const uint32_t x, const uint32_t in_min, const uint32_t in_max,
+             const uint32_t out_min, const uint32_t out_max) {
   if (in_min == in_max) {
     // avoid division by zero
     return out_max;
@@ -134,49 +134,71 @@ void render_params_menu(const uint8_t index) {
   u8g2_SendBuffer(&u8g2);
 }
 
-void render_measurement(const uint32_t baseline, const uint32_t new_value, const uint32_t latency) {
+void render_measurement(const uint32_t baseline, const uint32_t new_value,
+                        const uint32_t latency) {
   u8g2_ClearBuffer(&u8g2);
 
-  u8g2_DrawLine(&u8g2, 0, 36, 127, 36);
+  // top bar filling with cycles
+  u8g2_DrawRFrame(&u8g2, 0, 2, 128, 10, 3);
+  u8g2_DrawRBox(&u8g2, 2, 4, map(cycle_index + 1, 1, num_cycles, 6, 124), 6, 2);
 
-  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-  u8g2_DrawStr(&u8g2, 1, 9, "CYCLE");
+  // cycle n / num_cycles box
+  u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+  u8g2_DrawStr(&u8g2, 45, 25, "CYCLE");
 
-  u8g2_SetFont(&u8g2, DP_FONT_LARGE);
-  char cycle_buf[16];
-  snprintf(cycle_buf, sizeof(cycle_buf), "%d / %d", (int)(cycle_index + 1),
-           (int)num_cycles);
-  u8g2_DrawStr(&u8g2, 35, 20, cycle_buf);
+  u8g2_DrawRFrame(&u8g2, 0, 28, 128, 19, 3);
+  u8g2_DrawTriangle(&u8g2, 73, 28, 91, 46, 55, 46);
+  u8g2_DrawBox(&u8g2, 74, 29, 53, 17);
 
-  u8g2_DrawLine(&u8g2, 0, 72, 127, 72);
+  char cycle_buf[5];
+  snprintf(cycle_buf, sizeof(cycle_buf), "%d", cycle_index + 1);
+  uint8_t w = u8g2_GetStrWidth(&u8g2, cycle_buf);
+  u8g2_DrawStr(&u8g2, 30 - w / 2, 43, cycle_buf);
 
-  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-  u8g2_DrawStr(&u8g2, 1, 46, "BRIGHTNESS");
+  char num_cycles_buf[5];
+  snprintf(num_cycles_buf, sizeof(num_cycles_buf), "%d", num_cycles);
+  w = u8g2_GetStrWidth(&u8g2, num_cycles_buf);
+  u8g2_SetDrawColor(&u8g2, 0);
+  u8g2_DrawStr(&u8g2, 100 - w / 2, 43, num_cycles_buf);
+  u8g2_SetDrawColor(&u8g2, 1);
 
-  u8g2_SetFont(&u8g2, DP_FONT_LARGE);
+  // sensor baseline / new box
+  u8g2_DrawStr(&u8g2, 42, 62, "SENSOR");
+
+  u8g2_DrawRFrame(&u8g2, 0, 65, 128, 19, 3);
+  u8g2_DrawTriangle(&u8g2, 58, 65, 67, 74, 57, 83);
+  u8g2_DrawBox(&u8g2, 1, 66, 57, 17);
+
+  u8g2_SetDrawColor(&u8g2, 0);
   char baseline_buf[12];
   snprintf(baseline_buf, sizeof(baseline_buf), "%lu", (unsigned long)baseline);
-  u8g2_DrawStr(&u8g2, 3, 64, baseline_buf);
+  w = u8g2_GetStrWidth(&u8g2, baseline_buf);
+  u8g2_DrawStr(&u8g2, 30 - w / 2, 80, baseline_buf);
 
+  u8g2_SetDrawColor(&u8g2, 1);
   if (new_value != (uint32_t)-1) {
     char new_buf[12];
     snprintf(new_buf, sizeof(new_buf), "%lu", (unsigned long)new_value);
-    u8g2_DrawStr(&u8g2, 73, 64, new_buf);
-
-    u8g2_DrawXBMP(&u8g2, 45, 50, 17, 10, left_arrow_bitmap);
+    w = u8g2_GetStrWidth(&u8g2, new_buf);
+    u8g2_DrawStr(&u8g2, 100 - w / 2, 80, new_buf);
   }
 
-  u8g2_SetFont(&u8g2, DP_FONT_SMALL);
-  u8g2_DrawStr(&u8g2, 1, 82, "LATENCY");
+  // latency box
+  u8g2_SetDrawColor(&u8g2, 1);
+  u8g2_DrawRBox(&u8g2, 0, 102, 128, 26, 3);
+  u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
+  u8g2_DrawStr(&u8g2, 40, 99, "LATENCY");
+  
 
   if (latency != (uint32_t)-1) {
+    u8g2_SetDrawColor(&u8g2, 0);
     u8g2_SetFont(&u8g2, DP_FONT_LARGE);
-    u8g2_DrawStr(&u8g2, 93, 102, "ms");
-
     char latency_buf[16];
-    snprintf(latency_buf, sizeof(latency_buf), "%.3f",
+    snprintf(latency_buf, sizeof(latency_buf), "%.3f ms",
              (float)latency / 1000.0f);
-    u8g2_DrawStr(&u8g2, 2, 102, latency_buf);
+    w = u8g2_GetStrWidth(&u8g2, latency_buf);
+    u8g2_DrawStr(&u8g2, 64 - w / 2, 123, latency_buf);
+    u8g2_SetDrawColor(&u8g2, 1);
   }
 
   u8g2_SendBuffer(&u8g2);
@@ -230,7 +252,7 @@ void draw_latency_graph(uint32_t latencies_us[], float mean_ms) {
       num_cycles == 0 ? 0.0f : 108.0f / (float)num_cycles;
 
   uint8_t mean_y = (uint8_t)(107 - (int)((mean_ms - min) * pixel_per_value));
-  for (int i = 23;  i < 122; i += 3) {
+  for (int i = 23; i < 122; i += 3) {
     u8g2_DrawPixel(&u8g2, i, mean_y);
   }
 
@@ -251,7 +273,8 @@ void draw_latency_graph(uint32_t latencies_us[], float mean_ms) {
   }
 }
 
-void render_statistics(uint32_t latencies_us[], const float mean_ms, const float sd_ms) {
+void render_statistics(uint32_t latencies_us[], const float mean_ms,
+                       const float sd_ms) {
   u8g2_ClearBuffer(&u8g2);
 
   u8g2_DrawRFrame(&u8g2, 1, 1, 126, 51, 3);
