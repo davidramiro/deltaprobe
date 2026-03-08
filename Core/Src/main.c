@@ -45,6 +45,8 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
+typedef void (*menu_action_fn)(void);
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -101,10 +103,22 @@ static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
+static void latency_routine(void);
+static void params_menu_routine(void);
+static void jiggle_routine(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+static const menu_action_fn menu_actions[] = {
+    [LATENCY] = latency_routine,
+    [PARAMS] = params_menu_routine,
+    [JIGGLER] = jiggle_routine,
+};
+
+#define MENU_ACTIONS_COUNT (sizeof(menu_actions) / sizeof(menu_actions[0]))
 
 /**
  * @brief  This function is called when a timer interrupt occurs.
@@ -134,7 +148,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   }
 
   if (htim->Instance == TIM4) {
-
     if (!display_sleeping) {
       if (standby_interrupt_counter == DISPLAY_SLEEP_TIMEOUT_S / 5) {
         sleep_requested = 1;
@@ -177,10 +190,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 /**
  * @brief Reads the current ADC value and updates the global minimum and maximum
  * values.
- * @details This function calls readAveragedADC() to get an average of the
- * current ADC  value. It then compares this value against the stored
- * min_adc_val and max_adc_val, updating the respective global variables if the
- * new value is lower or higher.
  *
  * @retval None
  */
@@ -223,13 +232,50 @@ void update_ADC_channel() {
 }
 
 /**
+ * @brief Runs the latency measurement routine.
+ * @details Measures latency for `num_cycles`, computes statistics,
+ *          renders results, and waits for the user to dismiss.
+ */
+static void latency_routine(void) {
+  uint32_t latencies_us[num_cycles];
+  memset(latencies_us, 0, sizeof(latencies_us));
+
+  while (cycle_index < num_cycles) {
+    int8_t error = measure(latencies_us);
+
+    if (error) {
+      cycle_index = 0;
+      break;
+    }
+    cycle_index++;
+  }
+
+  float mean_ms = 0.0f;
+  float sd_ms = 0.0f;
+
+  compute_latency_stats(latencies_us, &mean_ms, &sd_ms);
+  render_statistics(latencies_us, mean_ms, sd_ms);
+  cycle_index = 0;
+
+  while (!btn_center_pressed) {
+    tud_task();
+    handle_MCU_sleep();
+  }
+  btn_center_pressed = 0;
+
+  sleep_requested = 0;
+  standby_interrupt_counter = 0;
+}
+
+/**
  * @brief This function runs the parameter menu loop.
  * @details It can sleep the MCU, polls buttons, polls ADC, and draws the menu.
  * If the exit button is pressed, it saves to flash. If flash fails, it shows an
  * error.
  * @retval None
  */
-static void menu_routine() {
+static void params_menu_routine(void) {
+  main_menu_selector = 0;
   cur_adc_val = 0;
   min_adc_val = INT32_MAX;
   max_adc_val = 0;
@@ -265,7 +311,7 @@ static void menu_routine() {
  * It draws a countdown screen, moves the mouse randomly after JIGGLE_INTERVAL_S
  * seconds, and exits if the center button is pressed.
  */
-static void jiggle_routine() {
+static void jiggle_routine(void) {
   jiggle_interrupt_counter = 0;
   HAL_Delay(50);
 
@@ -285,6 +331,53 @@ static void jiggle_routine() {
       return;
     }
   }
+}
+
+/**
+ * @brief  Initializes the hardware components and system peripherals.
+ * @details This function performs the initialization of hardware:
+ * - Initializes the TinyUSB stack for the root hub port 0 as a high-speed device.
+ * - Self-test of GPIO LEDs
+ * - Sets up the display using the u8g2 library, initializes it, and disables power saving mode.
+ * - Renders a splash screen on the display.
+ * - Waits for a brief period (2 seconds) to allow USB init to settle.
+ * - Reads the flash memory for stored settings or data.
+ * - Configures and updates the ADC channel.
+ * - Starts the base timers with interrupt functionality for periodic operations.
+ */
+static void hardware_init(void) {
+  // init usb device stack on roothub port 0 for highspeed device
+  tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE,
+                                 .speed = TUSB_SPEED_FULL};
+  tusb_init(0, &dev_init);
+
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
+
+  u8g2_Setup_sh1107_i2c_seeed_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c,
+                                        u8x8_stm32_gpio_and_delay);
+  u8g2_InitDisplay(&u8g2);
+  u8g2_SetPowerSave(&u8g2, 0);
+
+  render_splash_screen();
+
+  // wait 2s for USB to settle and show splashscreen
+  const uint32_t t0 = HAL_GetTick();
+  while (HAL_GetTick() - t0 < 1000) {
+    tud_task();
+    HAL_Delay(2);
+  }
+
+  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
+
+  read_flash();
+
+  update_ADC_channel();
+
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim4);
+
 }
 
 /* USER CODE END 0 */
@@ -327,37 +420,8 @@ int main(void) {
   MX_TIM3_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  // Init device stack on roothub port 0 for highspeed device
-  tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE,
-                                 .speed = TUSB_SPEED_FULL};
-  tusb_init(0, &dev_init);
 
-  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_SET);
-
-  u8g2_Setup_sh1107_i2c_seeed_128x128_f(&u8g2, U8G2_R0, u8x8_byte_stm32_hw_i2c,
-                                        u8x8_stm32_gpio_and_delay);
-  u8g2_InitDisplay(&u8g2);
-  u8g2_SetPowerSave(&u8g2, 0);
-
-  render_splash_screen();
-
-  // wait 2s for USB to settle and show splashscreen
-  uint32_t t0 = HAL_GetTick();
-  while (HAL_GetTick() - t0 < 1000) {
-    tud_task();
-    HAL_Delay(2);
-  }
-
-  HAL_GPIO_WritePin(INF_LED_GPIO_Port, INF_LED_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(ERR_LED_GPIO_Port, ERR_LED_Pin, GPIO_PIN_RESET);
-
-  read_flash();
-
-  update_ADC_channel();
-
-  HAL_TIM_Base_Start_IT(&htim3);
-  HAL_TIM_Base_Start_IT(&htim4);
+  hardware_init();
 
   /* USER CODE END 2 */
 
@@ -368,46 +432,9 @@ int main(void) {
     poll_main_menu_buttons();
     handle_MCU_sleep();
 
-    // wait for button press
-    if (btn_center_pressed) {
-      if (main_menu_selector == LATENCY) {
-        uint32_t latencies_us[num_cycles] = {};
-
-        while (cycle_index < num_cycles) {
-          int8_t error = measure(latencies_us);
-
-          if (error) {
-            cycle_index = 0;
-            break;
-          }
-          cycle_index++;
-        }
-
-        float mean_ms = 0.0f;
-        float sd_ms = 0.0f;
-
-        compute_latency_stats(latencies_us, &mean_ms, &sd_ms);
-        render_statistics(latencies_us, mean_ms, sd_ms);
-        cycle_index = 0;
-
-        while (1) {
-          if (btn_center_pressed) {
-            HAL_Delay(50);
-            break;
-          }
-        }
-        sleep_requested = 0;
-        standby_interrupt_counter = 0;
-      }
-
-      if (main_menu_selector == PARAMS) {
-        main_menu_selector = 0;
-        menu_routine();
-      }
-
-      if (main_menu_selector == JIGGLER) {
-        jiggle_routine();
-      }
+    if (btn_center_pressed && (size_t)main_menu_selector < MENU_ACTIONS_COUNT &&
+        menu_actions[main_menu_selector]) {
+      menu_actions[main_menu_selector]();
     }
 
     render_startup_screen();
