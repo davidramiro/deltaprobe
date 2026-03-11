@@ -150,12 +150,12 @@ void render_measurement(const uint32_t baseline, const uint32_t new_value,
   u8g2_DrawTriangle(&u8g2, 73, 28, 91, 46, 55, 46);
   u8g2_DrawBox(&u8g2, 74, 29, 53, 17);
 
-  char cycle_buf[5];
+  char cycle_buf[6];
   snprintf(cycle_buf, sizeof(cycle_buf), "%d", cycle_index + 1);
   uint8_t w = u8g2_GetStrWidth(&u8g2, cycle_buf);
   u8g2_DrawStr(&u8g2, 30 - w / 2, 43, cycle_buf);
 
-  char num_cycles_buf[5];
+  char num_cycles_buf[6];
   snprintf(num_cycles_buf, sizeof(num_cycles_buf), "%d", num_cycles);
   w = u8g2_GetStrWidth(&u8g2, num_cycles_buf);
   u8g2_SetDrawColor(&u8g2, 0);
