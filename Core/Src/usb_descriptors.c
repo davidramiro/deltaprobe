@@ -35,10 +35,10 @@
  */
 #define PID_MAP(itf, n) ((CFG_TUD_##itf) ? (1 << (n)) : 0)
 #define USB_PID                                                                \
-  (0x4000 | PID_MAP(CDC, 0) | PID_MAP(MSC, 1) | PID_MAP(HID, 2) |              \
+  (0xDE42 | PID_MAP(CDC, 0) | PID_MAP(MSC, 1) | PID_MAP(HID, 2) |              \
    PID_MAP(MIDI, 3) | PID_MAP(VENDOR, 4))
 
-#define USB_VID 0xCafe
+#define USB_VID 0x0483
 #define USB_BCD 0x0200
 
 //--------------------------------------------------------------------+
@@ -89,23 +89,41 @@ uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance) {
 // Configuration Descriptor
 //--------------------------------------------------------------------+
 
-enum { ITF_NUM_HID, ITF_NUM_TOTAL };
+// String Descriptor Index
+enum {
+  STRID_LANGID = 0,
+  STRID_MANUFACTURER,
+  STRID_PRODUCT,
+  STRID_SERIAL,
+  STRID_MSC,
+  STRID_HID,
+};
 
-#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
+enum { ITF_NUM_HID,
+  ITF_NUM_MSC,
+  ITF_NUM_TOTAL };
 
-#define EPNUM_HID 0x81
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + TUD_MSC_DESC_LEN)
+
+#define EPNUM_HID      0x81
+#define EPNUM_MSC_OUT  0x02
+#define EPNUM_MSC_IN   0x82
 
 uint8_t const desc_configuration[] = {
-    // Config number, interface count, string index, total length, attribute,
-    // power in mA
+    // Config number, interface count, string index, total length, attribute, power in mA
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN,
-                          TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+                          TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 200),
 
-    // Interface number, string index, protocol, report descriptor len, EP In
-    // address, size & polling interval
-    TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE,
+    // HID: interface number, string index, protocol, report descriptor len, EP In, size, interval
+    TUD_HID_DESCRIPTOR(ITF_NUM_HID, STRID_HID, HID_ITF_PROTOCOL_NONE,
                        sizeof(desc_hid_report), EPNUM_HID,
-                       CFG_TUD_HID_EP_BUFSIZE, 1)};
+                       CFG_TUD_HID_EP_BUFSIZE, 1),
+
+    // MSC: interface number, string index, EP Out & EP In address, EP size
+    // string index 1 or 2 are already used; pick a new one, e.g. 3 or 4
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN,
+                       CFG_TUD_MSC_EP_BUFSIZE)};
+
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
 // Application return pointer to descriptor
@@ -121,20 +139,14 @@ uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
 // String Descriptors
 //--------------------------------------------------------------------+
 
-// String Descriptor Index
-enum {
-  STRID_LANGID = 0,
-  STRID_MANUFACTURER,
-  STRID_PRODUCT,
-  STRID_SERIAL,
-};
-
 // array of pointer to string descriptors
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04}, // 0: is supported language is English (0x0409)
     "davidjusto.com",           // 1: Manufacturer
     "deltaprobe",               // 2: Product
     NULL,                       // 3: Serials will use unique ID if possible
+    "Mass Storage",             // 4: MSC interface
+    "HID" // 5: HID
 };
 
 static uint16_t _desc_str[32 + 1];

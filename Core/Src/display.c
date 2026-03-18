@@ -188,7 +188,6 @@ void render_measurement(const uint32_t baseline, const uint32_t new_value,
   u8g2_DrawRBox(&u8g2, 0, 102, 128, 26, 3);
   u8g2_SetFont(&u8g2, DP_FONT_MEDIUM);
   u8g2_DrawStr(&u8g2, 40, 99, "LATENCY");
-  
 
   if (latency != (uint32_t)-1) {
     u8g2_SetDrawColor(&u8g2, 0);
